@@ -172,7 +172,7 @@ Model LearnMrsortByWeightsProfilesBreed::perform() {
     // Keep the best model
     const unsigned best_model_index = models_being_learned.model_indexes.back();
     const unsigned current_best_accuracy = models_being_learned.accuracies[best_model_index];
-    if (current_best_accuracy >= models_being_learned.best_model_accuracy) {
+    if (current_best_accuracy > models_being_learned.best_model_accuracy) {
       models_being_learned.best_model_accuracy = models_being_learned.accuracies[best_model_index];
       copy(models_being_learned.low_profile_ranks[best_model_index], ref(models_being_learned.best_model_low_profile_ranks));
       copy(models_being_learned.high_profile_ranks[best_model_index], ref(models_being_learned.best_model_high_profile_ranks));
