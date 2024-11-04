@@ -30,7 +30,11 @@ LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::ModelsBeingLearned(
   single_peaked_criteria_count(count_single_peaked_criteria()),
   high_profile_rank_indexes(preprocessed_learning_set.criteria_count, uninitialized),
   high_profile_ranks(models_count, preprocessed_learning_set.boundaries_count, single_peaked_criteria_count, uninitialized),
-  weights(models_count, preprocessed_learning_set.criteria_count, uninitialized)
+  weights(models_count, preprocessed_learning_set.criteria_count, uninitialized),
+  best_model_accuracy(0),
+  best_model_low_profile_ranks(preprocessed_learning_set.boundaries_count, preprocessed_learning_set.criteria_count, uninitialized),
+  best_model_high_profile_ranks(preprocessed_learning_set.boundaries_count, single_peaked_criteria_count, uninitialized),
+  best_model_weights(preprocessed_learning_set.criteria_count, uninitialized)
 {
   CHRONE();
 
@@ -97,7 +101,7 @@ Model LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::make_model(
 #ifndef NDEBUG
 bool LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::model_is_correct(const unsigned model_index) const {
   try {
-    get_model(model_index);
+    make_model(low_profile_ranks[model_index], high_profile_ranks[model_index], weights[model_index]);
   } catch (const DataValidationException& e) {
     std::cerr << "Model " << model_index << " is incorrect: " << e.what() << std::endl;
     return false;
@@ -164,6 +168,16 @@ Model LearnMrsortByWeightsProfilesBreed::perform() {
         return models_being_learned.accuracies[left_model_index] < models_being_learned.accuracies[right_model_index];
       }
     );
+
+    // Keep the best model
+    const unsigned best_model_index = models_being_learned.model_indexes.back();
+    const unsigned current_best_accuracy = models_being_learned.accuracies[best_model_index];
+    if (current_best_accuracy >= models_being_learned.best_model_accuracy) {
+      models_being_learned.best_model_accuracy = models_being_learned.accuracies[best_model_index];
+      copy(models_being_learned.low_profile_ranks[best_model_index], ref(models_being_learned.best_model_low_profile_ranks));
+      copy(models_being_learned.high_profile_ranks[best_model_index], ref(models_being_learned.best_model_high_profile_ranks));
+      copy(models_being_learned.weights[best_model_index], ref(models_being_learned.best_model_weights));
+    }
 
     // Succeed?
     if (models_being_learned.get_best_accuracy() == preprocessed_learning_set.alternatives_count || termination_strategy.terminate()) {
