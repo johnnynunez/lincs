@@ -60,15 +60,17 @@ unsigned LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::count_single_pea
   return count;
 }
 
-Model LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::get_model(const unsigned model_index) const {
+Model LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::make_model(
+  ArrayView2D<Host, const unsigned> low_profile_ranks,
+  ArrayView2D<Host, const unsigned> high_profile_ranks,
+  ArrayView1D<Host, const float> weights
+) const {
   CHRONE();
-
-  assert(model_index < models_count);
 
   std::vector<float> model_weights;
   model_weights.reserve(preprocessed_learning_set.criteria_count);
   for (unsigned criterion_index = 0; criterion_index != preprocessed_learning_set.criteria_count; ++criterion_index) {
-    model_weights.push_back(weights[model_index][criterion_index]);
+    model_weights.push_back(weights[criterion_index]);
   }
   SufficientCoalitions coalitions = SufficientCoalitions(SufficientCoalitions::Weights(model_weights));
 
@@ -78,9 +80,9 @@ Model LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::get_model(const uns
     std::vector<std::variant<unsigned, std::pair<unsigned, unsigned>>> boundary_profile;
     boundary_profile.reserve(preprocessed_learning_set.criteria_count);
     for (unsigned criterion_index = 0; criterion_index != preprocessed_learning_set.criteria_count; ++criterion_index) {
-      const unsigned low_profile_rank = low_profile_ranks[model_index][boundary_index][criterion_index];
+      const unsigned low_profile_rank = low_profile_ranks[boundary_index][criterion_index];
       if (preprocessed_learning_set.single_peaked[criterion_index]) {
-        const unsigned high_profile_rank = high_profile_ranks[model_index][boundary_index][high_profile_rank_indexes[criterion_index]];
+        const unsigned high_profile_rank = high_profile_ranks[boundary_index][high_profile_rank_indexes[criterion_index]];
         boundary_profile.push_back(std::make_pair(low_profile_rank, high_profile_rank));
       } else {
         boundary_profile.push_back(low_profile_rank);
@@ -168,7 +170,7 @@ Model LearnMrsortByWeightsProfilesBreed::perform() {
       for (auto observer : observers) {
         observer->before_return();
       }
-      return models_being_learned.get_model(models_being_learned.model_indexes.back());
+      return models_being_learned.get_best_model();
     }
 
     // Breed

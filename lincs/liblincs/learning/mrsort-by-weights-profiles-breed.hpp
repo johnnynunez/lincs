@@ -86,8 +86,15 @@ struct LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned {
   unsigned get_best_accuracy() const { return accuracies[model_indexes.back()]; }
   Model get_best_model() const { return get_model(model_indexes.back()); }
 
-  Model get_model(unsigned model_index) const;
+ private:
+  Model get_model(unsigned model_index) const {
+    assert(model_index < models_count);
 
+    return make_model(low_profile_ranks[model_index], high_profile_ranks[model_index], weights[model_index]);
+  }
+  Model make_model(ArrayView2D<Host, const unsigned> low_profile_ranks, ArrayView2D<Host, const unsigned> high_profile_ranks, ArrayView1D<Host, const float> weights) const;
+
+ public:
   #ifndef NDEBUG
   bool model_is_correct(unsigned model_index) const;
   bool models_are_correct() const;
