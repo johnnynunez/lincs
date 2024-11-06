@@ -912,7 +912,7 @@ def classification_model(
             if mrsort__weights_profiles_breed__breed_strategy == "reinitialize-least-accurate":
                 command_line += ["--mrsort.weights-profiles-breed.reinitialize-least-accurate.portion", mrsort__weights_profiles_breed__reinitialize_least_accurate__portion]
                 count = int(mrsort__weights_profiles_breed__reinitialize_least_accurate__portion * mrsort__weights_profiles_breed__models_count)
-                breeding_strategy = lincs.classification.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy, count)
+                breeding_strategy = lincs.classification.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, count)
 
             command_line += ["--mrsort.weights-profiles-breed.target-accuracy", mrsort__weights_profiles_breed__target_accuracy]
             termination_strategies = [lincs.classification.TerminateAtAccuracy(

@@ -141,7 +141,7 @@ class BasicWpb {
       profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
       weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
       profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-      breeding_strategy(models_being_learned, profiles_initialization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
+      breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
       termination_strategy_accuracy(models_being_learned, target_accuracy),
       termination_strategy_progress(models_being_learned, 50),
       termination_strategy({&termination_strategy_accuracy, &termination_strategy_progress}),
@@ -183,7 +183,7 @@ class BasicWpb {
       profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
       weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
       profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-      breeding_strategy(models_being_learned, profiles_initialization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
+      breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
       termination_strategy_accuracy(models_being_learned, target_accuracy),
       termination_strategy_progress(models_being_learned, 50),
       termination_strategy({&termination_strategy_accuracy, &termination_strategy_progress}),
@@ -299,7 +299,7 @@ class AlglibWpbWrapper {
     profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
     weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
     profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-    breeding_strategy(models_being_learned, profiles_initialization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
+    breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
     termination_strategy(models_being_learned, 50),
     learning(
       preprocessed_learning_set,
@@ -334,7 +334,7 @@ class InHouseSimplexOnCpuWpbWrapper {
     profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
     weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
     profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-    breeding_strategy(models_being_learned, profiles_initialization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
+    breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
     termination_strategy(models_being_learned, 50),
     learning(
       preprocessed_learning_set,
@@ -371,7 +371,7 @@ class InHouseSimplexOnGpuWpbWrapper {
     profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
     weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
     profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-    breeding_strategy(models_being_learned, profiles_initialization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
+    breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
     termination_strategy(models_being_learned, 50),
     learning(
       preprocessed_learning_set,
@@ -431,7 +431,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria" * doctest::skip(skip_wp
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {12, 31, 40});
+    {10});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria" * doctest::skip(skip_wpb_glop)) {
@@ -439,7 +439,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria" * doctest::skip(skip_wp
     3, 2,
     {lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {9, 41});
+    {9});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria" * doctest::skip(skip_wpb_glop)) {
@@ -447,7 +447,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria" * doctest::skip(skip_wp
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {12, 31, 40});
+    {10});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria" * doctest::skip(skip_wpb_glop)) {
@@ -479,7 +479,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(
     7, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {36, 48, 59, 95});
+    {36, 48, 50, 59, 69, 95});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -487,7 +487,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(
     7, 2,
     {lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {20, 47});
+    {43, 47});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -495,7 +495,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(
     7, 2,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {41});
+    {41, 58});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -503,7 +503,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(
     4, 3,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {5, 59, 81});
+    {5, 59});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -511,7 +511,7 @@ TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(
     4, 3,
     {lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {6});
+    {});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -535,7 +535,7 @@ TEST_CASE("Basic (and GPU) WPB learning - discrete criteria" * doctest::skip(ski
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::integer, lincs::Criterion::ValueType::enumerated},
-    {6});
+    {6, 25});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - discrete criteria" * doctest::skip(skip_wpb_glop)) {
@@ -551,7 +551,7 @@ TEST_CASE("Basic (and GPU) WPB learning - discrete criteria - long" * doctest::s
     7, 2,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::integer, lincs::Criterion::ValueType::enumerated},
-    {11, 37, 66, 90, 93});
+    {11, 37, 90});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - discrete criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -559,7 +559,7 @@ TEST_CASE("Basic (and GPU) WPB learning - discrete criteria - long" * doctest::s
     4, 3,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::integer, lincs::Criterion::ValueType::enumerated},
-    {14, 42});
+    {});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - single-peaked real criteria" * doctest::skip(skip_wpb_glop)) {
@@ -575,7 +575,7 @@ TEST_CASE("Basic (and GPU) WPB learning - single-peaked real criteria" * doctest
     3, 2,
     {lincs::Criterion::PreferenceDirection::single_peaked},
     {lincs::Criterion::ValueType::real},
-    {52, 62, 63, 95});
+    {52, 62, 63, 89, 95});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - single-peaked real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -583,7 +583,7 @@ TEST_CASE("Basic (and GPU) WPB learning - single-peaked real criteria - long" * 
     3, 5,
     {lincs::Criterion::PreferenceDirection::single_peaked},
     {lincs::Criterion::ValueType::real},
-    {1, 9, 14, 20, 23, 73, 81});
+    {1, 14, 20, 23, 73, 81, 91});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - single-peaked real criteria - long" * doctest::skip(skip_wpb_glop || skip_long)) {
@@ -591,7 +591,7 @@ TEST_CASE("Basic (and GPU) WPB learning - single-peaked real criteria - long" * 
     7, 2,
     {lincs::Criterion::PreferenceDirection::single_peaked},
     {lincs::Criterion::ValueType::real},
-    {1, 2, 19, 26, 34, 43, 50, 61, 71, 72, 73, 81, 83, 98});
+    {1, 19, 26, 30, 34, 43, 47, 50, 61, 71, 73, 81, 83, 98});
 }
 
 TEST_CASE("Basic (and GPU) WPB learning - single-peaked integer criteria" * doctest::skip(skip_wpb_glop)) {
@@ -607,7 +607,7 @@ TEST_CASE("Basic (and GPU) WPB learning - all" * doctest::skip(skip_wpb_glop)) {
     3, 3,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing, lincs::Criterion::PreferenceDirection::single_peaked},
     {lincs::Criterion::ValueType::real, lincs::Criterion::ValueType::integer, lincs::Criterion::ValueType::enumerated},
-    {20, 34, 46});
+    {});
 }
 
 TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)) {
@@ -639,7 +639,7 @@ TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {31});
+    {10});
 }
 
 TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)) {
@@ -647,7 +647,7 @@ TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)
     3, 2,
     {lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {9, 41, 45});
+    {9});
 }
 
 TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)) {
@@ -655,7 +655,7 @@ TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {31});
+    {10});
 }
 
 TEST_CASE("Alglib WPB learning - real criteria" * doctest::skip(skip_wpb_alglib)) {
@@ -687,7 +687,7 @@ TEST_CASE("Alglib WPB learning - real criteria - long" * doctest::skip(skip_wpb_
     7, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {59, 62});
+    {});
 }
 
 TEST_CASE("Alglib WPB learning - real criteria - long" * doctest::skip(skip_wpb_alglib || skip_long)) {
@@ -695,7 +695,7 @@ TEST_CASE("Alglib WPB learning - real criteria - long" * doctest::skip(skip_wpb_
     7, 2,
     {lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {48});
+    {});
 }
 
 TEST_CASE("Alglib WPB learning - real criteria - long" * doctest::skip(skip_wpb_alglib || skip_long)) {
@@ -727,7 +727,7 @@ TEST_CASE("Alglib WPB learning - real criteria - long" * doctest::skip(skip_wpb_
     4, 3,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {5, 55});
+    {55});
 }
 
 TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 1*2" * doctest::skip(skip_wpb_in_house_simplex)) {
@@ -743,7 +743,7 @@ TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 3*2" * doctest
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {28});
+    {10, 22, 28, 34, 49, 84});
 }
 
 TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 1*3" * doctest::skip(skip_wpb_in_house_simplex)) {
@@ -769,7 +769,7 @@ TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 7*2 - long" * 
     {lincs::Criterion::ValueType::real},
     // @todo(Feature, later) Reduce the number of failed learnings
     // (It's due to the poor quality of our in-house Simplex implementation)
-    {0, 2, 6, 10, 11, 12, 13, 16, 18, 22, 25, 26, 28, 32, 34, 35, 36, 37, 38, 41, 42, 44, 47, 48, 50, 51, 53, 55, 59, 62, 63, 64, 69, 70, 71, 74, 76, 78, 79, 83, 85, 89, 90, 95, 97, 98, 99});
+    {0, 2, 6, 10, 11, 12, 13, 16, 18, 22, 25, 26, 28, 32, 34, 35, 37, 41, 42, 44, 47, 48, 49, 50, 51, 53, 59, 61, 62, 63, 64, 66, 67, 69, 71, 73, 74, 76, 78, 79, 83, 85, 89, 90, 94, 95, 96, 97, 98, 99});
 }
 
 TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 4*3 - long" * doctest::skip(skip_wpb_in_house_simplex || skip_long)) {
@@ -779,7 +779,7 @@ TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 4*3 - long" * 
     {lincs::Criterion::ValueType::real},
     // @todo(Feature, later) Reduce the number of failed learnings
     // (It's due to the poor quality of our in-house Simplex implementation)
-    {8, 14, 21, 33, 44, 49, 53, 54, 55, 56, 58, 59, 62, 65, 78, 84, 85, 89, 95});
+    {8, 21, 33, 49, 53, 54, 56, 58, 59, 60, 62, 65, 68, 70, 73, 80, 89, 90, 95});
 }
 
 #ifdef LINCS_HAS_NVCC
@@ -797,7 +797,7 @@ TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 3*2" * doctest
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {28});
+    {10, 22, 28, 34, 49, 84});
 }
 
 TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 1*3" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex)) {
@@ -823,7 +823,7 @@ TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 7*2 - long" * 
     {lincs::Criterion::ValueType::real},
     // @todo(Feature, later) Reduce the number of failed learnings
     // (It's due to the poor quality of our in-house Simplex implementation)
-    {0, 2, 6, 10, 11, 12, 13, 16, 18, 21, 22, 25, 26, 28, 32, 34, 35, 36, 37, 38, 41, 42, 44, 47, 49, 50, 51, 53, 55, 59, 62, 63, 64, 69, 70, 71, 74, 76, 78, 79, 83, 85, 89, 90, 95, 96, 97, 98, 99});
+    {0, 2, 6, 10, 11, 12, 13, 16, 18, 21, 22, 25, 26, 28, 32, 34, 35, 36, 37, 38, 41, 42, 44, 47, 48, 49, 50, 51, 53, 55, 59, 62, 63, 64, 66, 69, 71, 73, 74, 76, 78, 79, 83, 85, 89, 90, 94, 95, 96, 97, 98, 99});
 }
 
 TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 4*3 - long" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex || skip_long)) {
@@ -833,7 +833,7 @@ TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 4*3 - long" * 
     {lincs::Criterion::ValueType::real},
     // @todo(Feature, later) Reduce the number of failed learnings
     // (It's due to the poor quality of our in-house Simplex implementation)
-    {8, 14, 21, 33, 49, 53, 54, 55, 56, 58, 59, 65, 78, 84, 85, 89, 95});
+    {6, 8, 33, 44, 49, 53, 54, 56, 58, 59, 60, 62, 65, 68, 70, 80, 84, 85, 89, 90, 91, 95});
 }
 
 #endif
@@ -1923,7 +1923,7 @@ TEST_CASE("Non-exact WPB learning - real criteria" * doctest::skip(skip_wpb_glop
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing},
     {lincs::Criterion::ValueType::real},
-    {21, 45, 84});
+    {11, 21, 45, 62, 65, 74, 77, 84});
 }
 
 TEST_CASE("Non-exact WPB learning - real criteria" * doctest::skip(skip_wpb_glop)) {
@@ -1931,7 +1931,7 @@ TEST_CASE("Non-exact WPB learning - real criteria" * doctest::skip(skip_wpb_glop
     3, 2,
     {lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {30, 53});
+    {9, 25, 45, 53, 84});
 }
 
 TEST_CASE("Non-exact WPB learning - real criteria" * doctest::skip(skip_wpb_glop)) {
@@ -1939,7 +1939,7 @@ TEST_CASE("Non-exact WPB learning - real criteria" * doctest::skip(skip_wpb_glop
     3, 2,
     {lincs::Criterion::PreferenceDirection::increasing, lincs::Criterion::PreferenceDirection::decreasing},
     {lincs::Criterion::ValueType::real},
-    {21, 45, 84});
+    {11, 21, 45, 62, 65, 74, 77, 84});
 }
 
 TEST_CASE("Non-exact WPB learning - real criteria" * doctest::skip(skip_wpb_glop)) {

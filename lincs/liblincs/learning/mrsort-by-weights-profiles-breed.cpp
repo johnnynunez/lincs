@@ -133,26 +133,24 @@ Model LearnMrsortByWeightsProfilesBreed::perform() {
   }
 
   profiles_initialization_strategy.initialize_profiles(0, models_being_learned.models_count);
+  weights_optimization_strategy.optimize_weights(0, models_being_learned.models_count);
 
   assert(models_being_learned.models_are_correct());
 
   while (true) {
-    // Improve
     // @todo(Performance, later) Consider keeping the common part of all LPs in memory, and use it as a base for the LPs.
     // (The part that comes from the structure of the problem, and the part that comes from the learing set: they are always the same.)
+
     // @todo(Performance, later) Consider modifying the linear programs instead of regenerating them.
     // We know what profiles have changed since the last iteration, so maybe we could just update the constraints.
+
     // @todo(Performance, later) Consider stopping the LP optimization after the first phase,
     // i.e. when we have the first feasible solution. Maybe we don't need the optimal solution?
-    weights_optimization_strategy.optimize_weights(0, models_being_learned.models_count);
+
     profiles_improvement_strategy.improve_profiles(0, models_being_learned.models_count);
+    weights_optimization_strategy.optimize_weights(0, models_being_learned.models_count);
 
     assert(models_being_learned.models_are_correct());
-
-    // @todo(Feature, later) Rework this main loop. Its current problems:
-    //   - we return models that have gone through a last profiles improvement, but their weights have not been optimized
-    //   - we decide to stop the learning based on the accuracy of those models in this weird state
-    // Beware, if optimize_weights is run after improve_profiles, it must also be run during the breeding strategy.
 
     // Sort model_indexes by increasing model accuracy
     for (unsigned model_index = 0; model_index != models_being_learned.models_count; ++model_index) {

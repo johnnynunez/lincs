@@ -435,11 +435,12 @@ void define_learning_classes(py::module& m) {
     "The breeding strategy described in Olivier Sobrie's PhD thesis: re-initializes ``count`` in-progress models."
   )
     .def(
-      py::init<lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned&, lincs::LearnMrsortByWeightsProfilesBreed::ProfilesInitializationStrategy&, unsigned>(),
-      "models_being_learned"_a, "profiles_initialization_strategy"_a, "count"_a,
+      py::init<lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned&, lincs::LearnMrsortByWeightsProfilesBreed::ProfilesInitializationStrategy&, lincs::LearnMrsortByWeightsProfilesBreed::WeightsOptimizationStrategy&, unsigned>(),
+      "models_being_learned"_a, "profiles_initialization_strategy"_a, "weights_optimization_strategy"_a, "count"_a,
       "Constructor. Keeps references to the profiles initialization strategy and the learning data.",
       py::keep_alive<1, 2>(),
-      py::keep_alive<1, 3>()
+      py::keep_alive<1, 3>(),
+      py::keep_alive<1, 4>()
     )
     .def(
       "breed",
