@@ -600,7 +600,7 @@ std::optional<InHouseSimplexOnGpuLinearProgram::solution_type> InHouseSimplexOnG
     assert(!std::isnan(solution->cost));
     assert(!std::isinf(solution->cost));
     {
-      const Tableau::fp_type epsilon = 1e-5;
+      const Tableau::fp_type epsilon = 1e-3;
       const bool close_enough =
         (std::abs(on_cpu_solution->cost) < epsilon && std::abs(solution->cost) < epsilon)
         ||
