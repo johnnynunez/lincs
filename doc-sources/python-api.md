@@ -1448,15 +1448,15 @@ kind: ncs-classification-model
 format_version: 1
 accepted_values:
   - kind: thresholds
-    thresholds: [7.95116329, 3.72116661]
+    thresholds: [7.93314505, 3.74707603]
   - kind: thresholds
-    thresholds: [97, 99]
+    thresholds: [9, 9]
   - kind: thresholds
     thresholds: [B, B]
 sufficient_coalitions:
   - &coalitions
     kind: weights
-    criterion_weights: [1, 0, 1]
+    criterion_weights: [1, 0.999998987, 1]
   - *coalitions
 kind: ncs-classification-model
 format_version: 1

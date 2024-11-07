@@ -81,13 +81,20 @@ struct LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned {
   Array2D<Host, float> weights;  // [model_index][criterion_index]
   // @todo(Performance, later) Add models' ages
 
+  unsigned best_model_accuracy;
+  Array2D<Host, unsigned> best_model_low_profile_ranks;  // [boundary_index][criterion_index]
+  Array2D<Host, unsigned> best_model_high_profile_ranks;  // [boundary_index][high_profile_rank_indexes[criterion_index]]
+  Array1D<Host, float> best_model_weights;  // [criterion_index]
+
   ModelsBeingLearned(const PreprocessedLearningSet& preprocessed_learning_set, unsigned models_count, unsigned random_seed);
 
-  unsigned get_best_accuracy() const { return accuracies[model_indexes.back()]; }
-  Model get_best_model() const { return get_model(model_indexes.back()); }
+  unsigned get_best_accuracy() const { return best_model_accuracy; }
+  Model get_best_model() const { return make_model(best_model_low_profile_ranks, best_model_high_profile_ranks, best_model_weights); }
 
-  Model get_model(unsigned model_index) const;
+ private:
+  Model make_model(ArrayView2D<Host, const unsigned> low_profile_ranks, ArrayView2D<Host, const unsigned> high_profile_ranks, ArrayView1D<Host, const float> weights) const;
 
+ public:
   #ifndef NDEBUG
   bool model_is_correct(unsigned model_index) const;
   bool models_are_correct() const;
