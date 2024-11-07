@@ -246,7 +246,7 @@ def make_liblincs_extension():
         include_dirs += [os.path.join(lincs_dependencies, "include")]
         library_dirs += [os.path.join(lincs_dependencies, "lib")]
         libraries += [
-            "ortools_full",
+            "ortools",
             f"python{sys.version_info.major}{sys.version_info.minor}",
         ]
     elif sys.platform == "darwin":
