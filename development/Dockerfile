@@ -45,9 +45,8 @@ RUN set -x \
 
 FROM downloader AS download-or-tools
 
-# DO NOT UPGRADE to version 9.y: there is a SegFault bug (that I still need to report)
 RUN set -x \
- && wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_ubuntu-20.04_v8.2.8710.tar.gz \
+ && wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz \
  && tar xf or-tools_*.tar.gz \
  && rm or-tools_*.tar.gz \
  && mv or-tools_* or-tools
@@ -124,7 +123,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN --mount=type=bind,from=download-or-tools,source=/download,target=/download \
     set -x \
  && cp -r /download/or-tools/include/* /usr/local/include \
- && cp -r /download/or-tools/lib/*.so /usr/local/lib
+ && cp -r /download/or-tools/lib/libortools.so* /usr/local/lib
 
 # Python packages: development and publication tools
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \

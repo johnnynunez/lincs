@@ -34,7 +34,7 @@ jobs:
       - name: Install OR-Tools
         run: |
             cd /home/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_ubuntu-20.04_v8.2.8710.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
             tar xf or-tools_*.tar.gz
             rm or-tools_*.tar.gz
             cd or-tools_*
@@ -116,7 +116,7 @@ jobs:
         shell: msys2 {0}
         run: |
             cd /d/a
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_VisualStudio2019-64bit_v8.2.8710.zip
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x64_VisualStudio2022_cpp_v9.11.4210.zip
             unzip or-tools_*.zip
             rm or-tools_*.zip
             cd or-tools_*
@@ -176,12 +176,17 @@ jobs:
       - name: Install OR-Tools
         run: |
             cd /Users/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_MacOsX-11.2.1_v8.2.8710.tar.gz
-            tar xf or-tools_*.tar.gz
-            rm or-tools_*.tar.gz
-            cd or-tools_*
-            sudo cp -r include/* /usr/local/include
-            sudo cp -r lib/* /usr/local/lib
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x86_64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_x86_64_*.tar.gz
+            rm or-tools_x86_64_*.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_arm64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_arm64_*.tar.gz
+            rm or-tools_arm64_*.tar.gz
+            sudo cp -r or-tools_arm64_*/include/* /usr/local/include
+            lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
+            cd /usr/local/lib
+            ln -s libortools.9.11.dylib libortools.9.dylib
+            ln -s libortools.9.dylib libortools.dylib
 
       - name: Get the code
         uses: actions/checkout@v4
