@@ -238,9 +238,9 @@ jobs:
             tar xf or-tools_arm64_*.tar.gz
             rm or-tools_arm64_*.tar.gz
             sudo cp -r or-tools_arm64_*/include/* /usr/local/include
-            lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
+            lipo or-tools*/lib/libortools.9.6.dylib -output /usr/local/lib/libortools.9.6.dylib -create
             cd /usr/local/lib
-            ln -s libortools.9.11.dylib libortools.9.dylib
+            ln -s libortools.9.6.dylib libortools.9.dylib
             ln -s libortools.9.dylib libortools.dylib
 
       - name: Dowload the source distribution from GitHub Actions artifacts
