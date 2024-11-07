@@ -240,8 +240,8 @@ def make_liblincs_extension():
             ("__WIN32", None),  # For Cadical inside EvalMaxSat
             ("_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS", None),  # Silence a few warnings for OR-Tools
         ]
-        extra_compile_args["c++"] = ["/std:c++20", "/openmp"]
-        extra_compile_args["vendored-c++"] = ["/std:c++20", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
+        extra_compile_args["c++"] = ["/std:c++17", "/openmp"]
+        extra_compile_args["vendored-c++"] = ["/std:c++17", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
         lincs_dependencies = os.environ.get("LINCS_DEV_DEPENDENCIES", os.path.join("c:", "lincs-deps"))
         include_dirs += [os.path.join(lincs_dependencies, "include")]
         library_dirs += [os.path.join(lincs_dependencies, "lib")]
