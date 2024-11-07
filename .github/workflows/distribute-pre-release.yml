@@ -280,8 +280,23 @@ jobs:
           - windows-2022
           - macos-12
           - macos-13
-          # No macos-14: we don't support M1 chips
+          - macos-14
+          - macos-15
         python_version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Older Python versions don't build 'universal2' wheels, so they can't run on the M1 runner that run macOS 14 and 15
+          - os: macos-14
+            python_version: '3.8'
+          - os: macos-15
+            python_version: '3.8'
+          - os: macos-14
+            python_version: '3.9'
+          - os: macos-15
+            python_version: '3.9'
+          - os: macos-14
+            python_version: '3.10'
+          - os: macos-15
+            python_version: '3.10'
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
