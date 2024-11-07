@@ -131,7 +131,6 @@ jobs:
         env:
           LINCS_DEV_FORCE_NVCC: "true"
           LINCS_DEV_DEPENDENCIES: d:\lincs-deps
-          LINCS_DEV_VC_VERSION: 142
       - name: Make the wheel machine-independent
         run: delvewheel repair --strip (get-item local-dist\*.whl) --wheel-dir dist --add-path d:\lincs-deps\lib
       - name: Check the wheel

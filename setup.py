@@ -245,7 +245,6 @@ def make_liblincs_extension():
         lincs_dependencies = os.environ.get("LINCS_DEV_DEPENDENCIES", os.path.join("c:", "lincs-deps"))
         include_dirs += [os.path.join(lincs_dependencies, "include")]
         library_dirs += [os.path.join(lincs_dependencies, "lib")]
-        vc_version = os.environ.get("LINCS_DEV_VC_VERSION", "143")
         libraries += [
             "ortools",
             f"python{sys.version_info.major}{sys.version_info.minor}",
