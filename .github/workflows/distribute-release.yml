@@ -1,8 +1,4 @@
-# About caching: this workflow is typically run every two weeks,
-# and GitHub Actions evict caches unsused for 7 days,
-# so for simplicity we don't cache anything.
-
-# WARNING: There is a lot of duplication between distribute{,-pre}-release.yml because I don't know (yet) how
+# WARNING: There is a lot of duplication between .yml workflows because I don't know (yet) how
 # to factorize these workflows. Keep things in sync.
 
 name: Distribute release
@@ -63,7 +59,7 @@ jobs:
       - name: Install OR-Tools
         run: |
             cd /home/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_ubuntu-20.04_v8.2.8710.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
             tar xf or-tools_*.tar.gz
             rm or-tools_*.tar.gz
             cd or-tools_*
@@ -118,13 +114,6 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
         run: pip install build delvewheel twine
-      # @toto(Project management, soon) Consider replacing the Jimver/cuda-toolkit action by these two steps
-      # - name: Download CUDA installer
-      #   run: Invoke-WebRequest -URI https://developer.download.nvidia.com/compute/cuda/12.1.0/network_installers/cuda_12.1.0_windows_network.exe -OutFile cuda_12.1.0_windows_network.exe
-      # - name: Install CUDA
-      #   # Package names from https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#id2
-      #   run: .\cuda_12.1.0_windows_network.exe -s nvcc_12.1 cudart_12.1
-      # Note: tried it, and it failed because 'setup.py' could not find 'nvcc' in the PATH
       - name: Install CUDA
         uses: Jimver/cuda-toolkit@v0.2.14
         id: cuda-toolkit
@@ -160,6 +149,7 @@ jobs:
         shell: msys2 {0}
         run: |
             cd /d/a
+            # @todo(Project management, soon) Homogenize OR-Tools version with Linux and macOS
             wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_VisualStudio2019-64bit_v8.2.8710.zip
             unzip or-tools_*.zip
             rm or-tools_*.zip
@@ -194,7 +184,7 @@ jobs:
           path: dist
 
   build-for-macos:
-    runs-on: macos-12
+    runs-on: macos-13
     needs:
       - make-source-dist
     strategy:
@@ -214,7 +204,7 @@ jobs:
             cd /Users/runner/work
             mkdir openmp
             cd openmp
-            wget https://mac.r-project.org/openmp/openmp-10.0.0-darwin17-Release.tar.gz
+            wget https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
             tar xf *.tar.gz
             sudo cp usr/local/lib/* /usr/local/lib
             sudo cp usr/local/include/* /usr/local/include
@@ -229,12 +219,17 @@ jobs:
       - name: Install OR-Tools
         run: |
             cd /Users/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_MacOsX-11.2.1_v8.2.8710.tar.gz
-            tar xf or-tools_*.tar.gz
-            rm or-tools_*.tar.gz
-            cd or-tools_*
-            sudo cp -r include/* /usr/local/include
-            sudo cp -r lib/* /usr/local/lib
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x86_64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_x86_64_*.tar.gz
+            rm or-tools_x86_64_*.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_arm64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_arm64_*.tar.gz
+            rm or-tools_arm64_*.tar.gz
+            sudo cp -r or-tools_arm64_*/include/* /usr/local/include
+            lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
+            cd /usr/local/lib
+            ln -s libortools.9.11.dylib libortools.9.dylib
+            ln -s libortools.9.dylib libortools.dylib
 
       - name: Dowload the source distribution from GitHub Actions artifacts
         uses: actions/download-artifact@v4
@@ -265,16 +260,33 @@ jobs:
       - build-for-windows
       - build-for-macos
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2019
           - windows-2022
           - macos-12
           - macos-13
-          # No macos-14: we don't support M1 chips
+          - macos-14
+          - macos-15
         python_version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Older Python versions don't build 'universal2' wheels, so they can't run on the M1 runner that run macOS 14 and 15
+          - os: macos-14
+            python_version: '3.8'
+          - os: macos-15
+            python_version: '3.8'
+          - os: macos-14
+            python_version: '3.9'
+          - os: macos-15
+            python_version: '3.9'
+          - os: macos-14
+            python_version: '3.10'
+          - os: macos-15
+            python_version: '3.10'
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
@@ -282,7 +294,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       # DO NOT install any other dependencies, to test that the wheels are self-contained
 
-      - name: Dowload the wheels from GitHub Actions artifacts
+      - name: Download the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: wheel-dist-${{ matrix.python_version }}-*

@@ -1,11 +1,36 @@
+# WARNING: There is a lot of duplication between .yml workflows because I don't know (yet) how
+# to factorize these workflows. Keep things in sync.
+
 name: Test building on GitHub Actions
 on:
   push:
     branches:
       - test-gha/*
 jobs:
+  make-source-dist:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install dependencies
+        run: pip3 install build twine
+
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Build the source distribution
+        run: python3 -m build --sdist
+      - name: Check the source distribution
+        run: twine check dist/*
+
+      - name: Upload the source distribution to GitHub Actions artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-dist
+          path: dist
+
   build-for-linux:
     runs-on: ubuntu-20.04
+    needs:
+      - make-source-dist
     strategy:
       matrix:
         python_version: ['3.8', '3.13']
@@ -15,7 +40,7 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
-        run: pip${{ matrix.python_version }} install auditwheel build Chrones twine
+        run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
       - name: Install CUDA
         run: |
           sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
@@ -34,7 +59,7 @@ jobs:
       - name: Install OR-Tools
         run: |
             cd /home/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_ubuntu-20.04_v8.2.8710.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
             tar xf or-tools_*.tar.gz
             rm or-tools_*.tar.gz
             cd or-tools_*
@@ -50,11 +75,17 @@ jobs:
             tar xf *.tar.gz
             sudo cp bin/patchelf /usr/local/bin
 
-      - name: Get the code
-        uses: actions/checkout@v4
+      - name: Dowload the source distribution from GitHub Actions artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: source-dist
+      - name: Unzip the source distribution
+        run: |
+            tar xf *.tar.gz
+            rm *.tar.gz
 
       - name: Build the wheel
-        run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist
+        run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist lincs-*
         env:
           LINCS_DEV_FORCE_NVCC: "true"
           LINCS_DEV_FORCE_CHRONES: "true"
@@ -71,6 +102,8 @@ jobs:
 
   build-for-windows:
     runs-on: windows-2019
+    needs:
+      - make-source-dist
     strategy:
       matrix:
         python_version: ['3.8', '3.13']
@@ -116,6 +149,7 @@ jobs:
         shell: msys2 {0}
         run: |
             cd /d/a
+            # @todo(Project management, soon) Homogenize OR-Tools version with Linux and macOS
             wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_VisualStudio2019-64bit_v8.2.8710.zip
             unzip or-tools_*.zip
             rm or-tools_*.zip
@@ -123,11 +157,18 @@ jobs:
             cp -r include/* /d/lincs-deps/include
             cp -r lib/* /d/lincs-deps/lib
 
-      - name: Get the code
-        uses: actions/checkout@v4
+      - name: Dowload the source distribution from GitHub Actions artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: source-dist
+      - name: Unzip the source distribution
+        shell: msys2 {0}
+        run: |
+            tar xf *.tar.gz
+            rm *.tar.gz
 
       - name: Build the wheel
-        run: python -m build --wheel --outdir local-dist
+        run: python -m build --wheel --outdir local-dist (get-item lincs-*)
         env:
           LINCS_DEV_FORCE_NVCC: "true"
           LINCS_DEV_DEPENDENCIES: d:\lincs-deps
@@ -143,7 +184,9 @@ jobs:
           path: dist
 
   build-for-macos:
-    runs-on: macos-12
+    runs-on: macos-13
+    needs:
+      - make-source-dist
     strategy:
       matrix:
         python_version: ['3.8', '3.13']
@@ -161,7 +204,7 @@ jobs:
             cd /Users/runner/work
             mkdir openmp
             cd openmp
-            wget https://mac.r-project.org/openmp/openmp-10.0.0-darwin17-Release.tar.gz
+            wget https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
             tar xf *.tar.gz
             sudo cp usr/local/lib/* /usr/local/lib
             sudo cp usr/local/include/* /usr/local/include
@@ -176,18 +219,29 @@ jobs:
       - name: Install OR-Tools
         run: |
             cd /Users/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_MacOsX-11.2.1_v8.2.8710.tar.gz
-            tar xf or-tools_*.tar.gz
-            rm or-tools_*.tar.gz
-            cd or-tools_*
-            sudo cp -r include/* /usr/local/include
-            sudo cp -r lib/* /usr/local/lib
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x86_64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_x86_64_*.tar.gz
+            rm or-tools_x86_64_*.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_arm64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_arm64_*.tar.gz
+            rm or-tools_arm64_*.tar.gz
+            sudo cp -r or-tools_arm64_*/include/* /usr/local/include
+            lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
+            cd /usr/local/lib
+            ln -s libortools.9.11.dylib libortools.9.dylib
+            ln -s libortools.9.dylib libortools.dylib
 
-      - name: Get the code
-        uses: actions/checkout@v4
+      - name: Dowload the source distribution from GitHub Actions artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: source-dist
+      - name: Unzip the source distribution
+        run: |
+            tar xf *.tar.gz
+            rm *.tar.gz
 
       - name: Build the wheel
-        run: python3 -m build --wheel --outdir local-dist
+        run: python3 -m build --wheel --outdir local-dist lincs-*
       - name: Make the wheel machine-independent
         run: delocate-wheel --wheel-dir dist local-dist/*.whl
       - name: Check the wheel
@@ -216,8 +270,23 @@ jobs:
           - windows-2022
           - macos-12
           - macos-13
-          # No macos-14: we don't support M1 chips
+          - macos-14
+          - macos-15
         python_version: ['3.8', '3.13']
+        exclude:
+          # Older Python versions don't build 'universal2' wheels, so they can't run on the M1 runner that run macOS 14 and 15
+          - os: macos-14
+            python_version: '3.8'
+          - os: macos-15
+            python_version: '3.8'
+          - os: macos-14
+            python_version: '3.9'
+          - os: macos-15
+            python_version: '3.9'
+          - os: macos-14
+            python_version: '3.10'
+          - os: macos-15
+            python_version: '3.10'
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
