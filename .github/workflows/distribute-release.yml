@@ -214,7 +214,7 @@ jobs:
             cd /Users/runner/work
             mkdir openmp
             cd openmp
-            wget https://mac.r-project.org/openmp/openmp-10.0.0-darwin17-Release.tar.gz
+            wget https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
             tar xf *.tar.gz
             sudo cp usr/local/lib/* /usr/local/lib
             sudo cp usr/local/include/* /usr/local/include
