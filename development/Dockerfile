@@ -46,7 +46,7 @@ RUN set -x \
 FROM downloader AS download-or-tools
 
 RUN set -x \
- && wget https://github.com/google/or-tools/releases/download/v9.6/or-tools_amd64_ubuntu-20.04_cpp_v9.6.2534.tar.gz \
+ && wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz \
  && tar xf or-tools_*.tar.gz \
  && rm or-tools_*.tar.gz \
  && mv or-tools_* or-tools
