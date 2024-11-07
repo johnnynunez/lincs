@@ -1,8 +1,4 @@
-# About caching: this workflow is typically run every two weeks,
-# and GitHub Actions evict caches unsused for 7 days,
-# so for simplicity we don't cache anything.
-
-# WARNING: There is a lot of duplication between distribute{,-pre}-release.yml because I don't know (yet) how
+# WARNING: There is a lot of duplication between .yml workflows because I don't know (yet) how
 # to factorize these workflows. Keep things in sync.
 
 name: Distribute pre-release
@@ -120,13 +116,6 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
         run: pip install build delvewheel twine
-      # @toto(Project management, soon) Consider replacing the Jimver/cuda-toolkit action by these two steps
-      # - name: Download CUDA installer
-      #   run: Invoke-WebRequest -URI https://developer.download.nvidia.com/compute/cuda/12.1.0/network_installers/cuda_12.1.0_windows_network.exe -OutFile cuda_12.1.0_windows_network.exe
-      # - name: Install CUDA
-      #   # Package names from https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#id2
-      #   run: .\cuda_12.1.0_windows_network.exe -s nvcc_12.1 cudart_12.1
-      # Note: tried it, and it failed because 'setup.py' could not find 'nvcc' in the PATH
       - name: Install CUDA
         uses: Jimver/cuda-toolkit@v0.2.14
         id: cuda-toolkit
@@ -273,10 +262,12 @@ jobs:
       - build-for-windows
       - build-for-macos
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2019
           - windows-2022
           - macos-12
@@ -305,7 +296,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       # DO NOT install any other dependencies, to test that the wheels are self-contained
 
-      - name: Dowload the wheels from GitHub Actions artifacts
+      - name: Download the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: wheel-dist-${{ matrix.python_version }}-*
