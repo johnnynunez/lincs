@@ -4,14 +4,14 @@
 Changelog
 =========
 
-Version 2.0.0a4 (planned 2024-11-09)
-====================================
+Version 2.0.0a4 (2024-11-08)
+============================
 
 - **Changes behavior slightly** Optimize WPB model weights before evaluating and returning them
 - **Breaking** Add parameter ``weights_optimization_strategy`` to the ``ReinitializeLeastAccurate`` breeding strategy (required to fix previous point)
 - **Changes behavior slightly** Always keep the best model during WPB
 - Fix the ``universal2`` wheels for macOS to actually run on M1 Macs
-- **Changes behavior slightly** Upgrade OR-Tools from 8.2 to 9.11 (required for previous point)
+- **Changes behavior slightly** Upgrade OR-Tools from 8.2 to 9.11 on Linux and macOS (required for previous point)
 
 **Note** On Windows, the package still uses OR-Tools 8.2.
 

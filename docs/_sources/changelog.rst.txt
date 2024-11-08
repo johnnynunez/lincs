@@ -4,6 +4,17 @@
 Changelog
 =========
 
+Version 2.0.0a4 (2024-11-08)
+============================
+
+- **Changes behavior slightly** Optimize WPB model weights before evaluating and returning them
+- **Breaking** Add parameter ``weights_optimization_strategy`` to the ``ReinitializeLeastAccurate`` breeding strategy (required to fix previous point)
+- **Changes behavior slightly** Always keep the best model during WPB
+- Fix the ``universal2`` wheels for macOS to actually run on M1 Macs
+- **Changes behavior slightly** Upgrade OR-Tools from 8.2 to 9.11 on Linux and macOS (required for previous point)
+
+**Note** On Windows, the package still uses OR-Tools 8.2.
+
 Version 2.0.0a3 (2024-10-10)
 ============================
 
@@ -14,8 +25,8 @@ Version 2.0.0a3 (2024-10-10)
     - exposed on the command-line with the ``--mrsort.weights-profiles-breed.linear-program.solver`` and ``--mrsort.weights-profiles-breed.linear-program.experimental-in-house-simplex.processor`` options
     - very EXPERIMENTAL, with unsatisfactory results for now
 
-Version 2.0.0 (2024-XX-YY)
-==========================
+Version 2.0.0 (planned 2024-12-05)
+==================================
 
 - Support Python 3.12
 
