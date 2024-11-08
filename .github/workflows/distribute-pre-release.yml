@@ -327,6 +327,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: source-dist
+          path: dist
       - name: Dowload the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
