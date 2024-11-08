@@ -4,7 +4,7 @@
 Changelog
 =========
 
-Version 2.0.0a4 (2024-11-08)
+Version 2.0.0a5 (2024-11-08)
 ============================
 
 - **Changes behavior slightly** Optimize WPB model weights before evaluating and returning them
