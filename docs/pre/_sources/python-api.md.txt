@@ -208,7 +208,7 @@ models_being_learned = lc.LearnMrsortByWeightsProfilesBreed.ModelsBeingLearned(p
 profiles_initialization_strategy = lc.InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion(preprocessed_learning_set, models_being_learned)
 weights_optimization_strategy = lc.OptimizeWeightsUsingGlop(preprocessed_learning_set, models_being_learned)
 profiles_improvement_strategy = lc.ImproveProfilesWithAccuracyHeuristicOnCpu(preprocessed_learning_set, models_being_learned)
-breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy=profiles_initialization_strategy, count=4)
+breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, count=4)
 termination_strategy = lc.TerminateAtAccuracy(models_being_learned, target_accuracy=len(learning_set.alternatives))
 ```
 
@@ -1146,7 +1146,7 @@ models_being_learned = lc.LearnMrsortByWeightsProfilesBreed.ModelsBeingLearned(p
 profiles_initialization_strategy = lc.InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion(preprocessed_learning_set, models_being_learned)
 weights_optimization_strategy = lc.OptimizeWeightsUsingGlop(preprocessed_learning_set, models_being_learned)
 profiles_improvement_strategy = lc.ImproveProfilesWithAccuracyHeuristicOnCpu(preprocessed_learning_set, models_being_learned)
-breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy=profiles_initialization_strategy, count=4)
+breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, count=4)
 termination_strategy = lc.TerminateAfterIterations(models_being_learned, max_iterations_count=1)
 
 lc.LearnMrsortByWeightsProfilesBreed(
@@ -1189,7 +1189,7 @@ list(models_being_learned.accuracies)  # Indexed by model_index
 
 
 ```text
-[728, 593, 725, 671, 637, 609, 676, 833, 640]
+[764, 595, 725, 666, 637, 609, 676, 830, 640]
 ```
 
 
@@ -1245,14 +1245,14 @@ Its `weights` attribute holds the MR-Sort weight of each criterion in each in-pr
 
 
 ```text
-[[1.0132789611816406e-06, 0.9999989867210388, 1.0132789611816406e-06],
- [0.9999989867210388, 0.9999989867210388, 1.0132789611816406e-06],
- [1.0, 0.0, 0.9999989867210388],
- [0.5000004768371582, 0.4999994933605194, 0.4999994933605194],
- [1.0132789611816406e-06, 0.9999989867210388, 0.0],
- [0.9999989867210388, 0.0, 1.0132789611816406e-06],
- [1.0, 0.0, 0.0],
+[[0.5, 0.5, 0.5],
  [1.0, 0.9999989867210388, 1.0132789611816406e-06],
+ [1.0, 0.0, 0.9999989867210388],
+ [1.0, 0.0, 0.9999989867210388],
+ [1.0132789611816406e-06, 0.9999989867210388, 0.0],
+ [1.0132789611816406e-06, 0.0, 0.9999989867210388],
+ [1.0, 0.0, 0.9999989867210388],
+ [1.0, 0.0, 1.0],
  [0.9999989867210388, 0.0, 0.9999989867210388]]
 ```
 
@@ -1278,7 +1278,7 @@ accepted_values:
 sufficient_coalitions:
   - &coalitions
     kind: weights
-    criterion_weights: [1, 0.999998987, 1.01327896e-06]
+    criterion_weights: [1, 0, 1]
   - *coalitions
 ```
 
@@ -1292,7 +1292,7 @@ models_being_learned.get_best_accuracy()
 
 
 ```text
-833
+830
 ```
 
 
@@ -1327,7 +1327,7 @@ We can now pass it to a learning and perform that learning to observe its effect
 profiles_initialization_strategy = lc.InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion(preprocessed_learning_set, models_being_learned)
 weights_optimization_strategy = lc.OptimizeWeightsUsingGlop(preprocessed_learning_set, models_being_learned)
 profiles_improvement_strategy = lc.ImproveProfilesWithAccuracyHeuristicOnCpu(preprocessed_learning_set, models_being_learned)
-breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy=profiles_initialization_strategy, count=4)
+breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, count=4)
 termination_strategy = lc.TerminateAtAccuracy(models_being_learned, target_accuracy=len(learning_set.alternatives))
 observer = VerboseObserver(models_being_learned)
 
@@ -1381,7 +1381,7 @@ models_being_learned = lc.LearnMrsortByWeightsProfilesBreed.ModelsBeingLearned(p
 profiles_initialization_strategy = lc.InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion(preprocessed_learning_set, models_being_learned)
 weights_optimization_strategy = lc.OptimizeWeightsUsingGlop(preprocessed_learning_set, models_being_learned)
 profiles_improvement_strategy = lc.ImproveProfilesWithAccuracyHeuristicOnCpu(preprocessed_learning_set, models_being_learned)
-breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy=profiles_initialization_strategy, count=4)
+breeding_strategy = lc.ReinitializeLeastAccurate(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, count=4)
 termination_strategy = lc.TerminateAtAccuracy(models_being_learned, target_accuracy=len(learning_set.alternatives))
 observer = IntermediatesObserver(problem, models_being_learned)
 
@@ -1414,7 +1414,7 @@ accepted_values:
 sufficient_coalitions:
   - &coalitions
     kind: weights
-    criterion_weights: [1, 0.999998987, 1.01327896e-06]
+    criterion_weights: [1, 0, 1]
   - *coalitions
 kind: ncs-classification-model
 format_version: 1
@@ -1448,15 +1448,15 @@ kind: ncs-classification-model
 format_version: 1
 accepted_values:
   - kind: thresholds
-    thresholds: [7.96338844, 3.74707603]
+    thresholds: [7.93314505, 3.74707603]
   - kind: thresholds
-    thresholds: [94, 99]
+    thresholds: [9, 9]
   - kind: thresholds
     thresholds: [B, B]
 sufficient_coalitions:
   - &coalitions
     kind: weights
-    criterion_weights: [1, 0, 1]
+    criterion_weights: [1, 0.999998987, 1]
   - *coalitions
 kind: ncs-classification-model
 format_version: 1
@@ -1464,7 +1464,7 @@ accepted_values:
   - kind: thresholds
     thresholds: [7.95116329, 3.74707603]
   - kind: thresholds
-    thresholds: [94, 99]
+    thresholds: [73, 99]
   - kind: thresholds
     thresholds: [B, B]
 sufficient_coalitions:
@@ -1605,18 +1605,19 @@ learned_model = lc.LearnMrsortByWeightsProfilesBreed(
 initialize_profiles 0 9
 optimize_weights 0 9
 improve_profiles 0 9
+optimize_weights 0 9
 terminate
 breed
-optimize_weights 0 9
 improve_profiles 0 9
+optimize_weights 0 9
 terminate
 breed
-optimize_weights 0 9
 improve_profiles 0 9
+optimize_weights 0 9
 terminate
 breed
-optimize_weights 0 9
 improve_profiles 0 9
+optimize_weights 0 9
 terminate
 ```
 
