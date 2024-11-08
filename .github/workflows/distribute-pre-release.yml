@@ -332,10 +332,11 @@ jobs:
         with:
           pattern: wheel-dist-*
           merge-multiple: true
+          path: dist
       - name: Publish all distributions to the Python Package Index
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: .
+          packages-dir: dist
           verify-metadata: false
           verbose: true
 
