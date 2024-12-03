@@ -27,78 +27,78 @@ jobs:
           name: source-dist
           path: dist
 
-  build-for-linux:
-    runs-on: ubuntu-20.04
-    needs:
-      - make-source-dist
-    strategy:
-      matrix:
-        python_version: ['3.8', '3.13']
-    steps:
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python_version }}
-      - name: Install Python packages
-        run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
-      - name: Install CUDA
-        run: |
-          sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
-          sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-1 cuda-nvcc-12-1
-          echo "/usr/local/cuda-12.1/bin" >>$GITHUB_PATH
-      - name: Install Boost
-        run: |
-            cd /home/runner/work
-            wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
-            tar xf boost_*.tar.gz
-            rm boost_*.tar.gz
-            cd boost_*
-            sudo cp -r boost /usr/local/include
-      - name: Install OR-Tools
-        run: |
-            cd /home/runner/work
-            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
-            tar xf or-tools_*.tar.gz
-            rm or-tools_*.tar.gz
-            cd or-tools_*
-            sudo cp -r include/* /usr/local/include
-            sudo cp -r lib/* /usr/local/lib
-            sudo ldconfig
-      - name: Install patchelf
-        run: |
-            cd /home/runner/work
-            mkdir patchelf
-            cd patchelf
-            wget https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz
-            tar xf *.tar.gz
-            sudo cp bin/patchelf /usr/local/bin
+  # build-for-linux:
+  #   runs-on: ubuntu-20.04
+  #   needs:
+  #     - make-source-dist
+  #   strategy:
+  #     matrix:
+  #       python_version: ['3.8', '3.13']
+  #   steps:
+  #     - name: Install Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python_version }}
+  #     - name: Install Python packages
+  #       run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
+  #     - name: Install CUDA
+  #       run: |
+  #         sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
+  #         sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+  #         sudo apt-get update
+  #         sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-1 cuda-nvcc-12-1
+  #         echo "/usr/local/cuda-12.1/bin" >>$GITHUB_PATH
+  #     - name: Install Boost
+  #       run: |
+  #           cd /home/runner/work
+  #           wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+  #           tar xf boost_*.tar.gz
+  #           rm boost_*.tar.gz
+  #           cd boost_*
+  #           sudo cp -r boost /usr/local/include
+  #     - name: Install OR-Tools
+  #       run: |
+  #           cd /home/runner/work
+  #           wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
+  #           tar xf or-tools_*.tar.gz
+  #           rm or-tools_*.tar.gz
+  #           cd or-tools_*
+  #           sudo cp -r include/* /usr/local/include
+  #           sudo cp -r lib/* /usr/local/lib
+  #           sudo ldconfig
+  #     - name: Install patchelf
+  #       run: |
+  #           cd /home/runner/work
+  #           mkdir patchelf
+  #           cd patchelf
+  #           wget https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz
+  #           tar xf *.tar.gz
+  #           sudo cp bin/patchelf /usr/local/bin
 
-      - name: Dowload the source distribution from GitHub Actions artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: source-dist
-      - name: Unzip the source distribution
-        run: |
-            tar xf *.tar.gz
-            rm *.tar.gz
+  #     - name: Dowload the source distribution from GitHub Actions artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: source-dist
+  #     - name: Unzip the source distribution
+  #       run: |
+  #           tar xf *.tar.gz
+  #           rm *.tar.gz
 
-      - name: Build the wheel
-        run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist lincs-*
-        env:
-          LINCS_DEV_FORCE_NVCC: "true"
-          LINCS_DEV_FORCE_CHRONES: "true"
-      - name: Make the wheel machine-independent
-        run: auditwheel repair --plat manylinux_2_31_x86_64 --strip local-dist/*.whl --wheel-dir dist
-      - name: Check the wheel
-        run: twine check dist/*.whl
+  #     - name: Build the wheel
+  #       run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist lincs-*
+  #       env:
+  #         LINCS_DEV_FORCE_NVCC: "true"
+  #         LINCS_DEV_FORCE_CHRONES: "true"
+  #     - name: Make the wheel machine-independent
+  #       run: auditwheel repair --plat manylinux_2_31_x86_64 --strip local-dist/*.whl --wheel-dir dist
+  #     - name: Check the wheel
+  #       run: twine check dist/*.whl
 
-      - name: Upload the wheel to GitHub Actions artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheel-dist-${{ matrix.python_version }}-linux
-          path: dist
+  #     - name: Upload the wheel to GitHub Actions artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: wheel-dist-${{ matrix.python_version }}-linux
+  #         path: dist
 
   build-for-windows:
     runs-on: windows-2019
@@ -106,7 +106,7 @@ jobs:
       - make-source-dist
     strategy:
       matrix:
-        python_version: ['3.8', '3.13']
+        python_version: ['3.8']
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
@@ -183,96 +183,96 @@ jobs:
           name: wheel-dist-${{ matrix.python_version }}-windows
           path: dist
 
-  build-for-macos:
-    runs-on: macos-13
-    needs:
-      - make-source-dist
-    strategy:
-      matrix:
-        python_version: ['3.8', '3.13']
-    env:
-      MACOSX_DEPLOYMENT_TARGET: 12.0
-    steps:
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python_version }}
-      - name: Install Python packages
-        run: pip3 install build delocate twine
-      - name: Install OpenMP
-        run: |
-            cd /Users/runner/work
-            mkdir openmp
-            cd openmp
-            wget https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
-            tar xf *.tar.gz
-            sudo cp usr/local/lib/* /usr/local/lib
-            sudo cp usr/local/include/* /usr/local/include
-      - name: Install Boost
-        run: |
-            cd /Users/runner/work
-            wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
-            tar xf boost_*.tar.gz
-            rm boost_*.tar.gz
-            cd boost_*
-            sudo cp -r boost /usr/local/include
-      - name: Install OR-Tools
-        run: |
-            cd /Users/runner/work
-            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x86_64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
-            tar xf or-tools_x86_64_*.tar.gz
-            rm or-tools_x86_64_*.tar.gz
-            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_arm64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
-            tar xf or-tools_arm64_*.tar.gz
-            rm or-tools_arm64_*.tar.gz
-            sudo cp -r or-tools_arm64_*/include/* /usr/local/include
-            lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
-            cd /usr/local/lib
-            ln -s libortools.9.11.dylib libortools.9.dylib
-            ln -s libortools.9.dylib libortools.dylib
+  # build-for-macos:
+  #   runs-on: macos-13
+  #   needs:
+  #     - make-source-dist
+  #   strategy:
+  #     matrix:
+  #       python_version: ['3.8', '3.13']
+  #   env:
+  #     MACOSX_DEPLOYMENT_TARGET: 12.0
+  #   steps:
+  #     - name: Install Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python_version }}
+  #     - name: Install Python packages
+  #       run: pip3 install build delocate twine
+  #     - name: Install OpenMP
+  #       run: |
+  #           cd /Users/runner/work
+  #           mkdir openmp
+  #           cd openmp
+  #           wget https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
+  #           tar xf *.tar.gz
+  #           sudo cp usr/local/lib/* /usr/local/lib
+  #           sudo cp usr/local/include/* /usr/local/include
+  #     - name: Install Boost
+  #       run: |
+  #           cd /Users/runner/work
+  #           wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+  #           tar xf boost_*.tar.gz
+  #           rm boost_*.tar.gz
+  #           cd boost_*
+  #           sudo cp -r boost /usr/local/include
+  #     - name: Install OR-Tools
+  #       run: |
+  #           cd /Users/runner/work
+  #           wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x86_64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+  #           tar xf or-tools_x86_64_*.tar.gz
+  #           rm or-tools_x86_64_*.tar.gz
+  #           wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_arm64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+  #           tar xf or-tools_arm64_*.tar.gz
+  #           rm or-tools_arm64_*.tar.gz
+  #           sudo cp -r or-tools_arm64_*/include/* /usr/local/include
+  #           lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
+  #           cd /usr/local/lib
+  #           ln -s libortools.9.11.dylib libortools.9.dylib
+  #           ln -s libortools.9.dylib libortools.dylib
 
-      - name: Dowload the source distribution from GitHub Actions artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: source-dist
-      - name: Unzip the source distribution
-        run: |
-            tar xf *.tar.gz
-            rm *.tar.gz
+  #     - name: Dowload the source distribution from GitHub Actions artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: source-dist
+  #     - name: Unzip the source distribution
+  #       run: |
+  #           tar xf *.tar.gz
+  #           rm *.tar.gz
 
-      - name: Build the wheel
-        run: python3 -m build --wheel --outdir local-dist lincs-*
-      - name: Make the wheel machine-independent
-        run: delocate-wheel --wheel-dir dist local-dist/*.whl
-      - name: Check the wheel
-        run: twine check dist/*.whl
+  #     - name: Build the wheel
+  #       run: python3 -m build --wheel --outdir local-dist lincs-*
+  #     - name: Make the wheel machine-independent
+  #       run: delocate-wheel --wheel-dir dist local-dist/*.whl
+  #     - name: Check the wheel
+  #       run: twine check dist/*.whl
 
-      - name: Upload the wheel to GitHub Actions artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheel-dist-${{ matrix.python_version }}-macos
-          path: dist
+  #     - name: Upload the wheel to GitHub Actions artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: wheel-dist-${{ matrix.python_version }}-macos
+  #         path: dist
 
   check:
     runs-on: ${{ matrix.os }}
     needs:
-      - build-for-linux
+      # - build-for-linux
       - build-for-windows
-      - build-for-macos
+      # - build-for-macos
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-20.04
-          - ubuntu-22.04
-          - ubuntu-24.04
-          - windows-2019
+          # - ubuntu-20.04
+          # - ubuntu-22.04
+          # - ubuntu-24.04
+          # - windows-2019
           - windows-2022
-          - macos-12
-          - macos-13
-          - macos-14
-          - macos-15
-        python_version: ['3.8', '3.13']
+          # - macos-12
+          # - macos-13
+          # - macos-14
+          # - macos-15
+        python_version: ['3.8']
         exclude:
           # Older Python versions don't build 'universal2' wheels, so they can't run on the M1 runner that run macOS 14 and 15
           - os: macos-14
