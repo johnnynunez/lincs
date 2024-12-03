@@ -281,7 +281,7 @@ setuptools.setup(
     author="Vincent Jacques",
     author_email="vincent@vincent-jacques.net",
     install_requires=install_requires,
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_namespace_packages(),
     include_package_data=True,
     entry_points={
         "console_scripts": [
