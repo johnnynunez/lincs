@@ -153,6 +153,7 @@ jobs:
             unzip or-tools_*.zip
             rm or-tools_*.zip
             cd or-tools_*
+            sed -i 's/#define ABSL_OPTION_USE_STD_ORDERING 1/#define ABSL_OPTION_USE_STD_ORDERING 0/' include/absl/base/options.h
             cp -r include/* /d/lincs-deps/include
             cp -r lib/* /d/lincs-deps/lib
 
