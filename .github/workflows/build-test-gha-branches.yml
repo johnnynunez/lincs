@@ -115,10 +115,10 @@ jobs:
       - name: Install Python packages
         run: pip install build delvewheel twine
       - name: Install CUDA
-        uses: Jimver/cuda-toolkit@v0.2.14
+        uses: Jimver/cuda-toolkit@v0.2.19
         id: cuda-toolkit
         with:
-          cuda: '12.1.0'
+          cuda: '12.4.1'
           use-github-cache: false
           use-local-cache: false
           method: network

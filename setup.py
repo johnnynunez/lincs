@@ -30,7 +30,7 @@ with open("requirements.txt") as f:
     install_requires = f.readlines()
 
 
-windows_cuda_path = os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2")
+windows_cuda_path = os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4")
 
 
 # Method for building an extension with CUDA code extracted from https://stackoverflow.com/a/13300714/905845
@@ -199,7 +199,7 @@ def make_liblincs_extension():
         elif sys.platform == "win32":
             include_dirs += [os.path.join(windows_cuda_path, "include")]
             library_dirs += [os.path.join(windows_cuda_path, r"lib\x64")]
-            extra_compile_args["cuda"] = ["-std=c++17", "--allow-unsupported-compiler", "-Xcompiler", "/openmp,/MD"]
+            extra_compile_args["cuda"] = ["-std=c++17", "-Xcompiler", "/openmp,/MD"]
         else:
             assert False, f"Unsupported platform for CUDA: {sys.platform}"
     else:
