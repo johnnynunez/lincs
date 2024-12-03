@@ -116,8 +116,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
  && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" \
  && apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
-      cuda-cudart-dev-12-1 \
-      cuda-nvcc-12-1
+      cuda-cudart-dev-12-4 \
+      cuda-nvcc-12-4
 
 # OR-Tools
 RUN --mount=type=bind,from=download-or-tools,source=/download,target=/download \
@@ -177,7 +177,7 @@ RUN useradd user --uid $UID --create-home
 RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user
 USER user
 RUN mkdir -p /home/user/.local/bin
-ENV PATH=/home/user/.local/bin:$PATH:/usr/local/cuda-12.1/bin
+ENV PATH=/home/user/.local/bin:$PATH:/usr/local/cuda-12.4/bin
 
 # Make sure /home/user/.local/lib/python3.8/site-packages is in sys.path
 # (useful for development/cycle.py, where 'pip install --user lincs' is run just before 'import lincs')

@@ -30,7 +30,7 @@ with open("requirements.txt") as f:
     install_requires = f.readlines()
 
 
-windows_cuda_path = os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2")
+windows_cuda_path = os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4")
 
 
 # Method for building an extension with CUDA code extracted from https://stackoverflow.com/a/13300714/905845
@@ -193,8 +193,8 @@ def make_liblincs_extension():
         define_macros += [("LINCS_HAS_NVCC", None)]
         # @todo(Project management, later) Support several versions of CUDA?
         if sys.platform == "linux":
-            include_dirs += ["/usr/local/cuda-12.1/targets/x86_64-linux/include"]
-            library_dirs += ["/usr/local/cuda-12.1/targets/x86_64-linux/lib"]
+            include_dirs += ["/usr/local/cuda-12.4/targets/x86_64-linux/include"]
+            library_dirs += ["/usr/local/cuda-12.4/targets/x86_64-linux/lib"]
             extra_compile_args["cuda"] = ["-std=c++17", "-Xcompiler", "-fopenmp,-fPIC,-Werror=switch"]
         elif sys.platform == "win32":
             include_dirs += [os.path.join(windows_cuda_path, "include")]
@@ -240,13 +240,13 @@ def make_liblincs_extension():
             ("__WIN32", None),  # For Cadical inside EvalMaxSat
             ("_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS", None),  # Silence a few warnings for OR-Tools
         ]
-        extra_compile_args["c++"] = ["/std:c++17", "/openmp"]
-        extra_compile_args["vendored-c++"] = ["/std:c++17", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
+        extra_compile_args["c++"] = ["/std:c++20", "/openmp"]
+        extra_compile_args["vendored-c++"] = ["/std:c++20", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
         lincs_dependencies = os.environ.get("LINCS_DEV_DEPENDENCIES", os.path.join("c:", "lincs-deps"))
         include_dirs += [os.path.join(lincs_dependencies, "include")]
         library_dirs += [os.path.join(lincs_dependencies, "lib")]
         libraries += [
-            "ortools",
+            "ortools_full", "utf8_range", "utf8_validity",
             f"python{sys.version_info.major}{sys.version_info.minor}",
         ]
     elif sys.platform == "darwin":
