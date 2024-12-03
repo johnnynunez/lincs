@@ -27,160 +27,160 @@ jobs:
           name: source-dist
           path: dist
 
-  # build-for-linux:
-  #   runs-on: ubuntu-20.04
-  #   needs:
-  #     - make-source-dist
-  #   strategy:
-  #     matrix:
-  #       python_version: ['3.8', '3.13']
-  #   steps:
-  #     - name: Install Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{ matrix.python_version }}
-  #     - name: Install Python packages
-  #       run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
-  #     - name: Install CUDA
-  #       run: |
-  #         sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
-  #         sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
-  #         sudo apt-get update
-  #         sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-1 cuda-nvcc-12-1
-  #         echo "/usr/local/cuda-12.1/bin" >>$GITHUB_PATH
-  #     - name: Install Boost
-  #       run: |
-  #           cd /home/runner/work
-  #           wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
-  #           tar xf boost_*.tar.gz
-  #           rm boost_*.tar.gz
-  #           cd boost_*
-  #           sudo cp -r boost /usr/local/include
-  #     - name: Install OR-Tools
-  #       run: |
-  #           cd /home/runner/work
-  #           wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
-  #           tar xf or-tools_*.tar.gz
-  #           rm or-tools_*.tar.gz
-  #           cd or-tools_*
-  #           sudo cp -r include/* /usr/local/include
-  #           sudo cp -r lib/* /usr/local/lib
-  #           sudo ldconfig
-  #     - name: Install patchelf
-  #       run: |
-  #           cd /home/runner/work
-  #           mkdir patchelf
-  #           cd patchelf
-  #           wget https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz
-  #           tar xf *.tar.gz
-  #           sudo cp bin/patchelf /usr/local/bin
-
-  #     - name: Dowload the source distribution from GitHub Actions artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: source-dist
-  #     - name: Unzip the source distribution
-  #       run: |
-  #           tar xf *.tar.gz
-  #           rm *.tar.gz
-
-  #     - name: Build the wheel
-  #       run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist lincs-*
-  #       env:
-  #         LINCS_DEV_FORCE_NVCC: "true"
-  #         LINCS_DEV_FORCE_CHRONES: "true"
-  #     - name: Make the wheel machine-independent
-  #       run: auditwheel repair --plat manylinux_2_31_x86_64 --strip local-dist/*.whl --wheel-dir dist
-  #     - name: Check the wheel
-  #       run: twine check dist/*.whl
-
-  #     - name: Upload the wheel to GitHub Actions artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: wheel-dist-${{ matrix.python_version }}-linux
-  #         path: dist
-
-  build-for-windows:
-    runs-on: windows-2022
+  build-for-linux:
+    runs-on: ubuntu-20.04
     needs:
       - make-source-dist
     strategy:
       matrix:
-        python_version: ['3.8']
+        python_version: ['3.8', '3.13']
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
-        run: pip install build delvewheel twine
+        run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
       - name: Install CUDA
-        uses: Jimver/cuda-toolkit@v0.2.19
-        id: cuda-toolkit
-        with:
-          cuda: '12.4.1'
-          use-github-cache: false
-          use-local-cache: false
-          method: network
-          # Package names from https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#id2
-          sub-packages: '["nvcc", "cudart"]'
-      - name: Install MSys2
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: UCRT64
-          install: >-
-              gzip
-              tar
-              unzip
-              wget
-      - name: Install boost
-        shell: msys2 {0}
         run: |
-            cd /d/a
+          sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
+          sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-4 cuda-nvcc-12-4
+          echo "/usr/local/cuda-12.4/bin" >>$GITHUB_PATH
+      - name: Install Boost
+        run: |
+            cd /home/runner/work
             wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
             tar xf boost_*.tar.gz
             rm boost_*.tar.gz
-            mv boost_* boost
-            cd boost
-            mkdir -p /d/lincs-deps/include /d/lincs-deps/lib
-            cp -r boost /d/lincs-deps/include
+            cd boost_*
+            sudo cp -r boost /usr/local/include
       - name: Install OR-Tools
-        shell: msys2 {0}
         run: |
-            cd /d/a
-            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x64_VisualStudio2022_cpp_v9.11.4210.zip
-            unzip or-tools_*.zip
-            rm or-tools_*.zip
+            cd /home/runner/work
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_*.tar.gz
+            rm or-tools_*.tar.gz
             cd or-tools_*
-            cp -r include/* /d/lincs-deps/include
-            cp -r lib/* /d/lincs-deps/lib
+            sudo cp -r include/* /usr/local/include
+            sudo cp -r lib/* /usr/local/lib
+            sudo ldconfig
+      - name: Install patchelf
+        run: |
+            cd /home/runner/work
+            mkdir patchelf
+            cd patchelf
+            wget https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz
+            tar xf *.tar.gz
+            sudo cp bin/patchelf /usr/local/bin
 
       - name: Dowload the source distribution from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           name: source-dist
       - name: Unzip the source distribution
-        shell: msys2 {0}
         run: |
             tar xf *.tar.gz
             rm *.tar.gz
 
       - name: Build the wheel
-        run: python -m build --wheel --outdir local-dist (get-item lincs-*)
+        run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist lincs-*
         env:
           LINCS_DEV_FORCE_NVCC: "true"
-          LINCS_DEV_DEPENDENCIES: d:\lincs-deps
+          LINCS_DEV_FORCE_CHRONES: "true"
       - name: Make the wheel machine-independent
-        run: delvewheel repair --strip (get-item local-dist\*.whl) --wheel-dir dist --add-path d:\lincs-deps\lib
+        run: auditwheel repair --plat manylinux_2_31_x86_64 --strip local-dist/*.whl --wheel-dir dist
       - name: Check the wheel
-        run: twine check (get-item dist\*.whl)
+        run: twine check dist/*.whl
 
       - name: Upload the wheel to GitHub Actions artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-dist-${{ matrix.python_version }}-windows
+          name: wheel-dist-${{ matrix.python_version }}-linux
           path: dist
+
+  # build-for-windows:
+  #   runs-on: windows-2022
+  #   needs:
+  #     - make-source-dist
+  #   strategy:
+  #     matrix:
+  #       python_version: ['3.8']
+  #   steps:
+  #     - name: Install Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python_version }}
+  #     - name: Install Python packages
+  #       run: pip install build delvewheel twine
+  #     - name: Install CUDA
+  #       uses: Jimver/cuda-toolkit@v0.2.19
+  #       id: cuda-toolkit
+  #       with:
+  #         cuda: '12.4.1'
+  #         use-github-cache: false
+  #         use-local-cache: false
+  #         method: network
+  #         # Package names from https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#id2
+  #         sub-packages: '["nvcc", "cudart"]'
+  #     - name: Install MSys2
+  #       uses: msys2/setup-msys2@v2
+  #       with:
+  #         update: true
+  #         msystem: UCRT64
+  #         install: >-
+  #             gzip
+  #             tar
+  #             unzip
+  #             wget
+  #     - name: Install boost
+  #       shell: msys2 {0}
+  #       run: |
+  #           cd /d/a
+  #           wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+  #           tar xf boost_*.tar.gz
+  #           rm boost_*.tar.gz
+  #           mv boost_* boost
+  #           cd boost
+  #           mkdir -p /d/lincs-deps/include /d/lincs-deps/lib
+  #           cp -r boost /d/lincs-deps/include
+  #     - name: Install OR-Tools
+  #       shell: msys2 {0}
+  #       run: |
+  #           cd /d/a
+  #           wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x64_VisualStudio2022_cpp_v9.11.4210.zip
+  #           unzip or-tools_*.zip
+  #           rm or-tools_*.zip
+  #           cd or-tools_*
+  #           cp -r include/* /d/lincs-deps/include
+  #           cp -r lib/* /d/lincs-deps/lib
+
+  #     - name: Dowload the source distribution from GitHub Actions artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: source-dist
+  #     - name: Unzip the source distribution
+  #       shell: msys2 {0}
+  #       run: |
+  #           tar xf *.tar.gz
+  #           rm *.tar.gz
+
+  #     - name: Build the wheel
+  #       run: python -m build --wheel --outdir local-dist (get-item lincs-*)
+  #       env:
+  #         LINCS_DEV_FORCE_NVCC: "true"
+  #         LINCS_DEV_DEPENDENCIES: d:\lincs-deps
+  #     - name: Make the wheel machine-independent
+  #       run: delvewheel repair --strip (get-item local-dist\*.whl) --wheel-dir dist --add-path d:\lincs-deps\lib
+  #     - name: Check the wheel
+  #       run: twine check (get-item dist\*.whl)
+
+  #     - name: Upload the wheel to GitHub Actions artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: wheel-dist-${{ matrix.python_version }}-windows
+  #         path: dist
 
   # build-for-macos:
   #   runs-on: macos-13
@@ -255,18 +255,18 @@ jobs:
   check:
     runs-on: ${{ matrix.os }}
     needs:
-      # - build-for-linux
-      - build-for-windows
+      - build-for-linux
+      # - build-for-windows
       # - build-for-macos
     strategy:
       fail-fast: false
       matrix:
         os:
-          # - ubuntu-20.04
-          # - ubuntu-22.04
-          # - ubuntu-24.04
-          - windows-2019
-          - windows-2022
+          - ubuntu-20.04
+          - ubuntu-22.04
+          - ubuntu-24.04
+          # - windows-2019
+          # - windows-2022
           # - macos-12
           # - macos-13
           # - macos-14

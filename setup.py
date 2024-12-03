@@ -193,8 +193,8 @@ def make_liblincs_extension():
         define_macros += [("LINCS_HAS_NVCC", None)]
         # @todo(Project management, later) Support several versions of CUDA?
         if sys.platform == "linux":
-            include_dirs += ["/usr/local/cuda-12.1/targets/x86_64-linux/include"]
-            library_dirs += ["/usr/local/cuda-12.1/targets/x86_64-linux/lib"]
+            include_dirs += ["/usr/local/cuda-12.4/targets/x86_64-linux/include"]
+            library_dirs += ["/usr/local/cuda-12.4/targets/x86_64-linux/lib"]
             extra_compile_args["cuda"] = ["-std=c++17", "-Xcompiler", "-fopenmp,-fPIC,-Werror=switch"]
         elif sys.platform == "win32":
             include_dirs += [os.path.join(windows_cuda_path, "include")]
