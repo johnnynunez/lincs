@@ -4,6 +4,13 @@
 Changelog
 =========
 
+Version 2.0.0a6 (2024-12-03)
+============================
+
+- Remove everything related to our in-house Simplex
+- Upgrade to OR-Tools 9.11 on Windows
+- Upgrade to CUDA 12.4
+
 Version 2.0.0a5 (2024-11-08)
 ============================
 
