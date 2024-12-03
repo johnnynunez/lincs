@@ -101,7 +101,7 @@ jobs:
   #         path: dist
 
   build-for-windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     needs:
       - make-source-dist
     strategy:
@@ -153,7 +153,6 @@ jobs:
             unzip or-tools_*.zip
             rm or-tools_*.zip
             cd or-tools_*
-            sed -i 's/#define ABSL_OPTION_USE_STD_ORDERING 1/#define ABSL_OPTION_USE_STD_ORDERING 0/' include/absl/base/options.h
             cp -r include/* /d/lincs-deps/include
             cp -r lib/* /d/lincs-deps/lib
 
@@ -266,7 +265,7 @@ jobs:
           # - ubuntu-20.04
           # - ubuntu-22.04
           # - ubuntu-24.04
-          # - windows-2019
+          - windows-2019
           - windows-2022
           # - macos-12
           # - macos-13
