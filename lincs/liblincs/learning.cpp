@@ -23,7 +23,6 @@ const bool skip_long = env_is_true("LINCS_DEV_SKIP_LONG");
 const bool skip_wpb = env_is_true("LINCS_DEV_SKIP_WPB");
 const bool skip_wpb_glop = skip_wpb || env_is_true("LINCS_DEV_SKIP_WPB_GLOP");
 const bool skip_wpb_alglib = skip_wpb || env_is_true("LINCS_DEV_SKIP_WPB_ALGLIB");
-const bool skip_wpb_in_house_simplex = skip_wpb || env_is_true("LINCS_DEV_SKIP_WPB_IN_HOUSE_SIMPLEX");
 const bool skip_sat = env_is_true("LINCS_DEV_SKIP_SAT");
 const bool skip_max_sat = env_is_true("LINCS_DEV_SKIP_MAX_SAT");
 const bool coverage = env_is_true("LINCS_DEV_COVERAGE");
@@ -325,80 +324,6 @@ class AlglibWpbWrapper {
   TerminateAfterIterationsWithoutProgress termination_strategy;
   LearnMrsortByWeightsProfilesBreed learning;
 };
-
-class InHouseSimplexOnCpuWpbWrapper {
- public:
-  InHouseSimplexOnCpuWpbWrapper(const Problem& problem, const Alternatives& learning_set) :
-    preprocessed_learning_set(problem, learning_set),
-    models_being_learned(preprocessed_learning_set, LearnMrsortByWeightsProfilesBreed::default_models_count, 44),
-    profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
-    weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
-    profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-    breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
-    termination_strategy(models_being_learned, 50),
-    learning(
-      preprocessed_learning_set,
-      models_being_learned,
-      profiles_initialization_strategy,
-      weights_optimization_strategy,
-      profiles_improvement_strategy,
-      breeding_strategy,
-      termination_strategy
-    )
-  {}
-
- public:
-  auto perform() { return learning.perform(); }
-
- private:
-  PreprocessedLearningSet preprocessed_learning_set;
-  LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned models_being_learned;
-  InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion profiles_initialization_strategy;
-  OptimizeWeightsUsingInHouseSimplexOnCpu weights_optimization_strategy;
-  ImproveProfilesWithAccuracyHeuristicOnCpu profiles_improvement_strategy;
-  ReinitializeLeastAccurate breeding_strategy;
-  TerminateAfterIterationsWithoutProgress termination_strategy;
-  LearnMrsortByWeightsProfilesBreed learning;
-};
-
-#ifdef LINCS_HAS_NVCC
-
-class InHouseSimplexOnGpuWpbWrapper {
- public:
-  InHouseSimplexOnGpuWpbWrapper(const Problem& problem, const Alternatives& learning_set) :
-    preprocessed_learning_set(problem, learning_set),
-    models_being_learned(preprocessed_learning_set, LearnMrsortByWeightsProfilesBreed::default_models_count, 44),
-    profiles_initialization_strategy(preprocessed_learning_set, models_being_learned),
-    weights_optimization_strategy(preprocessed_learning_set, models_being_learned),
-    profiles_improvement_strategy(preprocessed_learning_set, models_being_learned),
-    breeding_strategy(models_being_learned, profiles_initialization_strategy, weights_optimization_strategy, LearnMrsortByWeightsProfilesBreed::default_models_count / 2),
-    termination_strategy(models_being_learned, 50),
-    learning(
-      preprocessed_learning_set,
-      models_being_learned,
-      profiles_initialization_strategy,
-      weights_optimization_strategy,
-      profiles_improvement_strategy,
-      breeding_strategy,
-      termination_strategy
-    )
-  {}
-
- public:
-  auto perform() { return learning.perform(); }
-
- private:
-  PreprocessedLearningSet preprocessed_learning_set;
-  LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned models_being_learned;
-  InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion profiles_initialization_strategy;
-  OptimizeWeightsUsingInHouseSimplexOnGpu weights_optimization_strategy;
-  ImproveProfilesWithAccuracyHeuristicOnGpu profiles_improvement_strategy;
-  ReinitializeLeastAccurate breeding_strategy;
-  TerminateAfterIterationsWithoutProgress termination_strategy;
-  LearnMrsortByWeightsProfilesBreed learning;
-};
-
-#endif
 
 }  // namespace
 
@@ -729,114 +654,6 @@ TEST_CASE("Alglib WPB learning - real criteria - long" * doctest::skip(skip_wpb_
     {lincs::Criterion::ValueType::real},
     {55});
 }
-
-TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 1*2" * doctest::skip(skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnCpuWpbWrapper>(
-    1, 2,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {});
-}
-
-TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 3*2" * doctest::skip(skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnCpuWpbWrapper>(
-    3, 2,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {10, 22, 28, 34, 49, 84});
-}
-
-TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 1*3" * doctest::skip(skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnCpuWpbWrapper>(
-    1, 3,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {});
-}
-
-TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 2*3" * doctest::skip(skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnCpuWpbWrapper>(
-    2, 3,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {});
-}
-
-TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 7*2 - long" * doctest::skip(skip_wpb_in_house_simplex || skip_long)) {
-  check_exact_learnings<InHouseSimplexOnCpuWpbWrapper>(
-    7, 2,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    // @todo(Feature, later) Reduce the number of failed learnings
-    // (It's due to the poor quality of our in-house Simplex implementation)
-    {0, 2, 6, 10, 11, 12, 13, 16, 18, 22, 25, 26, 28, 32, 34, 35, 37, 41, 42, 44, 47, 48, 49, 50, 51, 53, 59, 61, 62, 63, 64, 66, 67, 69, 71, 73, 74, 76, 78, 79, 83, 85, 89, 90, 94, 95, 96, 97, 98, 99});
-}
-
-TEST_CASE("In-house-simplex-on-CPU WPB learning - real criteria - 4*3 - long" * doctest::skip(skip_wpb_in_house_simplex || skip_long)) {
-  check_exact_learnings<InHouseSimplexOnCpuWpbWrapper>(
-    4, 3,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    // @todo(Feature, later) Reduce the number of failed learnings
-    // (It's due to the poor quality of our in-house Simplex implementation)
-    {8, 21, 33, 49, 53, 54, 56, 58, 59, 60, 62, 65, 68, 70, 73, 80, 89, 90, 95});
-}
-
-#ifdef LINCS_HAS_NVCC
-
-TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 1*2" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnGpuWpbWrapper>(
-    1, 2,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {});
-}
-
-TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 3*2" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnGpuWpbWrapper>(
-    3, 2,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {10, 22, 28, 34, 49, 84});
-}
-
-TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 1*3" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnGpuWpbWrapper>(
-    1, 3,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {});
-}
-
-TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 2*3" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex)) {
-  check_exact_learnings<InHouseSimplexOnGpuWpbWrapper>(
-    2, 3,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    {});
-}
-
-TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 7*2 - long" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex || skip_long)) {
-  check_exact_learnings<InHouseSimplexOnGpuWpbWrapper>(
-    7, 2,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    // @todo(Feature, later) Reduce the number of failed learnings
-    // (It's due to the poor quality of our in-house Simplex implementation)
-    {0, 2, 6, 10, 11, 12, 13, 16, 18, 21, 22, 25, 26, 28, 32, 34, 35, 36, 37, 38, 41, 42, 44, 47, 48, 49, 50, 51, 53, 55, 59, 62, 63, 64, 66, 69, 71, 73, 74, 76, 78, 79, 83, 85, 89, 90, 94, 95, 96, 97, 98, 99});
-}
-
-TEST_CASE("In-house-simplex-on-GPU WPB learning - real criteria - 4*3 - long" * doctest::skip(forbid_gpu || skip_wpb_in_house_simplex || skip_long)) {
-  check_exact_learnings<InHouseSimplexOnGpuWpbWrapper>(
-    4, 3,
-    {lincs::Criterion::PreferenceDirection::increasing},
-    {lincs::Criterion::ValueType::real},
-    // @todo(Feature, later) Reduce the number of failed learnings
-    // (It's due to the poor quality of our in-house Simplex implementation)
-    {6, 8, 33, 44, 49, 53, 54, 56, 58, 59, 60, 62, 65, 68, 70, 80, 84, 85, 89, 90, 91, 95});
-}
-
-#endif
 
 TEST_CASE("SAT by coalitions using Minisat learning - real criteria" * doctest::skip(skip_sat)) {
   check_exact_learnings<LearnUcncsBySatByCoalitionsUsingMinisat>(

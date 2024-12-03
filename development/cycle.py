@@ -68,10 +68,6 @@ import yaml
     help="Skip WPB learnings using Alglib unit tests to save time.",
 )
 @click.option(
-    "--skip-wpb-in-house-simplex-unit", is_flag=True,
-    help="Skip WPB learnings using in-house Simplex LP solver unit tests to save time.",
-)
-@click.option(
     "--skip-sat-unit", is_flag=True,
     help="Skip SAT-based learnings unit tests to save time.",
 )
@@ -130,7 +126,6 @@ def main(
     skip_wpb_unit,
     skip_wpb_glop_unit,
     skip_wpb_alglib_unit,
-    skip_wpb_in_house_simplex_unit,
     skip_sat_unit,
     skip_max_sat_unit,
     skip_cpp_unit,
@@ -193,7 +188,6 @@ def main(
                 skip_wpb=skip_wpb_unit,
                 skip_wpb_glop=skip_wpb_glop_unit,
                 skip_wpb_alglib=skip_wpb_alglib_unit,
-                skip_wpb_in_house_simplex=skip_wpb_in_house_simplex_unit,
                 skip_sat=skip_sat_unit,
                 skip_max_sat=skip_max_sat_unit,
                 doctest_options=doctest_option,
@@ -266,7 +260,7 @@ def print_title(title, under="="):
     print(flush=True)
 
 
-def run_cpp_tests(*, python_version, skip_long, skip_wpb, skip_wpb_glop, skip_wpb_alglib, skip_wpb_in_house_simplex, skip_sat, skip_max_sat, doctest_options):
+def run_cpp_tests(*, python_version, skip_long, skip_wpb, skip_wpb_glop, skip_wpb_alglib, skip_sat, skip_max_sat, doctest_options):
     suffix = "m" if int(python_version.split(".")[1]) < 8 else ""
     subprocess.run(
         [
@@ -288,8 +282,6 @@ def run_cpp_tests(*, python_version, skip_long, skip_wpb, skip_wpb_glop, skip_wp
         env["LINCS_DEV_SKIP_WPB_GLOP"] = "true"
     if skip_wpb_alglib:
         env["LINCS_DEV_SKIP_WPB_ALGLIB"] = "true"
-    if skip_wpb_in_house_simplex:
-        env["LINCS_DEV_SKIP_WPB_IN_HOUSE_SIMPLEX"] = "true"
     if skip_sat:
         env["LINCS_DEV_SKIP_SAT"] = "true"
     if skip_max_sat:

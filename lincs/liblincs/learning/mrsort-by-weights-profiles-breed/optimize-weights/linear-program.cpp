@@ -4,8 +4,6 @@
 
 #include "../../../chrones.hpp"
 #include "../../../linear-programming/alglib.hpp"
-#include "../../../linear-programming/in-house-simplex-on-cpu.hpp"
-#include "../../../linear-programming/in-house-simplex-on-gpu.hpp"
 #include "../../../linear-programming/glop.hpp"
 
 
@@ -97,10 +95,6 @@ void OptimizeWeightsUsingLinearProgram<LinearProgram>::optimize_model_weights(un
 }
 
 template class OptimizeWeightsUsingLinearProgram<GlopLinearProgram>;
-template class OptimizeWeightsUsingLinearProgram<InHouseSimplexOnCpuLinearProgram>;
-#ifdef LINCS_HAS_NVCC
-template class OptimizeWeightsUsingLinearProgram<InHouseSimplexOnGpuLinearProgram>;
-#endif  // LINCS_HAS_NVCC
 template class OptimizeWeightsUsingLinearProgram<AlglibLinearProgram>;
 
 }  // namespace lincs

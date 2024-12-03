@@ -37,11 +37,6 @@ try:
     from liblincs import ImproveProfilesWithAccuracyHeuristicOnGpu
 except ImportError:
     pass
-from liblincs import OptimizeWeightsUsingInHouseSimplexOnCpu
-try:
-    from liblincs import OptimizeWeightsUsingInHouseSimplexOnGpu
-except ImportError:
-    pass
 from liblincs import ReinitializeLeastAccurate
 from liblincs import TerminateAtAccuracy
 from liblincs import TerminateAfterSeconds, TerminateAfterSecondsWithoutProgress
