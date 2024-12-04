@@ -137,19 +137,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: source-dist
+          path: wd
 
       - name: Build the wheel, make it machine-independent and check it (during a Docker build in Qemu)
         run: |
-          docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --file .github/workflows/linux-arm64/build.Dockerfile
-          image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --file .github/workflows/linux-arm64/build.Dockerfile --quiet)
+          cp .github/workflows/linux-arm64/build.Dockerfile wd/Dockerfile
+          cd wd
+          find -type f
+          docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load .
+          image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --quiet)
           container=$(docker create --platform linux/arm64 $image)
           docker cp $container:/wd/dist .
+          find -type f
 
       - name: Upload the wheel to GitHub Actions artifacts
         uses: actions/upload-artifact@v4
         with:
           name: wheel-dist-${{ matrix.python_version }}-linux-arm64
-          path: dist
+          path: wd/dist
 
   check-on-linux-arm64:
     runs-on: ubuntu-24.04
@@ -175,12 +180,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: wheel-dist-${{ matrix.python_version }}-linux-arm64
-          path: dist
+          path: wd
 
       - name: Install the wheel and run it (during a Docker build in Qemu)
         run: |
+          cp .github/workflows/linux-arm64/check.Dockerfile wd/Dockerfile
+          cd wd
           find . -type f
-          docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --file .github/workflows/linux-arm64/check.Dockerfile
-          image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --file .github/workflows/linux-arm64/check.Dockerfile --quiet)
+          docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load .
+          image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --quiet)
           container=$(docker create --platform linux/arm64 $image)
           docker cp $container:/output.txt - | tar --extract --to-stdout
+          find . -type f
