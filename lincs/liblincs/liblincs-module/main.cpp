@@ -27,8 +27,4 @@ PYBIND11_MODULE(liblincs, m) {
   py::options options;
   options.disable_enum_members_docstring();
 
-  lincs::enroll_converters(m);
-  lincs::define_io_classes(m);
-  lincs::define_generation_functions(m);
-  lincs::define_learning_classes(m);
 }

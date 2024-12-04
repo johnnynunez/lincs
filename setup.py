@@ -229,7 +229,6 @@ def make_liblincs_extension():
         extra_compile_args["vendored-c++"] = ["-std=c++17", "-Werror=switch", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
         extra_link_args += ["-fopenmp"]
         libraries += [
-            "ortools",
             f"python{sys.version_info.major}.{sys.version_info.minor}",
         ]
         if os.environ.get("LINCS_DEV_COVERAGE", "false") == "true":

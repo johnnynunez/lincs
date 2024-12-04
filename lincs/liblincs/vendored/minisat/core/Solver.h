@@ -1,1 +1,0 @@
-../../../../../vendored/minisat/minisat/core/Solver.h

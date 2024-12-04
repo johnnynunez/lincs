@@ -1,1 +1,0 @@
-../../../../vendored/yaml-cpp/src/emitfromevents.cpp

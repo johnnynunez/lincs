@@ -1,1 +1,0 @@
-../../../../vendored/yaml-cpp/include/yaml-cpp/ostream_wrapper.h
