@@ -4,42 +4,16 @@
 Changelog
 =========
 
-Version 2.0.0a6 (2024-12-03)
-============================
-
-- Remove everything related to our in-house Simplex
-- Upgrade to OR-Tools 9.11 on Windows
-- Upgrade to CUDA 12.4
-
-Version 2.0.0a5 (2024-11-08)
-============================
-
-- **Changes behavior slightly** Optimize WPB model weights before evaluating and returning them
-- **Breaking** Add parameter ``weights_optimization_strategy`` to the ``ReinitializeLeastAccurate`` breeding strategy (required to fix previous point)
-- **Changes behavior slightly** Always keep the best model during WPB
-- Fix the ``universal2`` wheels for macOS to actually run on M1 Macs
-- **Changes behavior slightly** Upgrade OR-Tools from 8.2 to 9.11 on Linux and macOS (required for previous point)
-
-**Note** On Windows, the package still uses OR-Tools 8.2.
-
-Version 2.0.0a3 (2024-10-10)
-============================
-
-- Support Python 3.13
-
-- Add an in-house implementation of the Simplex algorithm to solve the LPs in the WPB learning method
-    - exposed in the Python API as ``lincs.classification.OptimizeWeightsUsingInHouseSimplexOnCpu`` and ``...OnGpu``
-    - exposed on the command-line with the ``--mrsort.weights-profiles-breed.linear-program.solver`` and ``--mrsort.weights-profiles-breed.linear-program.experimental-in-house-simplex.processor`` options
-    - very EXPERIMENTAL, with unsatisfactory results for now
-
 Version 2.0.0 (planned 2024-12-05)
 ==================================
 
-- Support Python 3.12
+- Support Python 3.12 and 3.13
 
 - Drop support for macOS 11 (`not supported by GitHub Actions anymore <https://github.blog/changelog/2024-05-20-actions-upcoming-changes-to-github-hosted-macos-runners/>`_)
 
-- **Major** Support single-peaked criteria:
+- Fix the ``universal2`` wheels for macOS to actually run on M1 Macs
+
+- **Major** Implement single-peaked criteria:
     - on the command-line, ``lincs generate classification-problem`` has a new ``--allow-single-peaked-criteria`` option
     - in the Problem file format, there is a new value ``single-peaked`` for ``preference_direction````
     - in the Model file format, there is a new possible value for ``accepted_values.kind``: ``intervals``, used with ``intervals: [[20, 80], [40, 60]]``
@@ -61,6 +35,14 @@ Version 2.0.0 (planned 2024-12-05)
 - **Breaking** Split ``LearnMrsortByWeightsProfilesBreed.LearningData`` into ``PreprocessedLearningSet`` and ``LearnMrsortByWeightsProfilesBreed.ModelsBeingLearned``
 
 - **Breaking** Rename ``LearningData.urbgs`` to ``ModelsBeingLearned.random_generators``
+
+- **Changes behavior slightly** Optimize WPB model weights before evaluating and returning them
+
+- **Breaking** Add parameter ``weights_optimization_strategy`` to the ``ReinitializeLeastAccurate`` breeding strategy (required to fix previous point)
+
+- **Changes behavior slightly** Always keep the best model during WPB
+
+- **Changes behavior slightly** Upgrade to OR-Tools 9.11 and CUDA 12.4
 
 Version 1.1.0 (2024-02-08)
 ==========================

@@ -8,8 +8,7 @@
 
 *lincs* (Learn and Infer Non Compensatory Sortings) is a collection of `MCDA <https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis>`_ algorithms, usable as a command-line utility and through a Python (3.8+) API.
 
-*lincs* supports Linux, macOS and Windows, with the exception that GPU-based algorithms are not available on macOS, because CUDA itself is not available there.
-On these 3 OSes, *lincs* only support x86_64 CPUs.
+*lincs* supports Linux (x86_64), macOS (Intel and M1, M2...) and Windows (x86_64), with the exception that GPU-based algorithms are not available on macOS, because CUDA itself is not available there.
 
 *lincs* is licensed under the GNU Lesser General Public License v3.0 as indicated by the two files `COPYING <COPYING>`_ and `COPYING.LESSER <COPYING.LESSER>`_.
 
