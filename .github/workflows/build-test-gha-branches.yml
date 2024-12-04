@@ -179,6 +179,7 @@ jobs:
 
       - name: Install the wheel and run it (during a Docker build in Qemu)
         run: |
+          find . -type f
           docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --file .github/workflows/linux-arm64/check.Dockerfile
           image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=${{ matrix.python_version }} --load . --file .github/workflows/linux-arm64/check.Dockerfile --quiet)
           container=$(docker create --platform linux/arm64 $image)
