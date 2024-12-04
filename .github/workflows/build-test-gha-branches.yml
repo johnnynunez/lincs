@@ -41,6 +41,14 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
         run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
+      - name: Install Boost
+        run: |
+            cd /home/runner/work
+            wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+            tar xf boost_*.tar.gz
+            rm boost_*.tar.gz
+            cd boost_*
+            sudo cp -r boost /usr/local/include
       - name: Install patchelf
         run: |
             cd /home/runner/work
@@ -114,6 +122,9 @@ jobs:
 
       - run: lincs --version
       - run: lincs --help
+      - run: lincs generate classification-problem 3 2 | tee problem.yml
+      - run: lincs generate classification-model problem.yml | tee model.yml
+      - run: lincs generate classified-alternatives problem.yml model.yml 100
 
   build-for-linux-arm64:
     runs-on: ubuntu-20.04
