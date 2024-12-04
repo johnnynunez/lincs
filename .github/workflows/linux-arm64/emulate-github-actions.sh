@@ -9,6 +9,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../../.."
 rm -rf github-actions-emulated
 mkdir -p github-actions-emulated/{build,check}
 echo '*' >github-actions-emulated/.gitignore
+cp .github/workflows/linux-arm64/build.Dockerfile github-actions-emulated/build/Dockerfile
+cp .github/workflows/linux-arm64/check.Dockerfile github-actions-emulated/check/Dockerfile
 
 rm -f lincs-*.tar.gz
 docker run \
@@ -23,21 +25,22 @@ python3 -m build --sdist --outdir github-actions-emulated/build
 chown $(id -u):$(id -g) -R .
 """
 
-(
-  cp .github/workflows/linux-arm64/build.Dockerfile github-actions-emulated/build/Dockerfile
-  cd github-actions-emulated/build
-  docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=3.8 --load .
-  image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=3.8 --load . --quiet)
-  container=$(docker create --platform linux/arm64 $image)
-  docker cp $container:/wd/dist .
-  cp dist/*.whl ../check
-)
+for platform in linux/amd64 linux/arm64
+do
+  (
+    cd github-actions-emulated/build
+    docker buildx build --platform $platform --build-arg PYTHON_VERSION=3.8 --load .
+    image=$(docker buildx build --platform $platform --build-arg PYTHON_VERSION=3.8 --load . --quiet)
+    container=$(docker create --platform $platform $image)
+    docker cp $container:/wd/dist .
+    cp dist/*.whl ../check
+  )
 
-(
-  cp .github/workflows/linux-arm64/check.Dockerfile github-actions-emulated/check/Dockerfile
-  cd github-actions-emulated/check
-  docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=3.8 --load .
-  image=$(docker buildx build --platform linux/arm64 --build-arg PYTHON_VERSION=3.8 --load . --quiet)
-  container=$(docker create --platform linux/arm64 $image)
-  docker cp $container:/output.txt - | tar --extract --to-stdout
-)
+  (
+    cd github-actions-emulated/check
+    docker buildx build --platform $platform --build-arg PYTHON_VERSION=3.8 --load .
+    image=$(docker buildx build --platform $platform --build-arg PYTHON_VERSION=3.8 --load . --quiet)
+    container=$(docker create --platform $platform $image)
+    docker cp $container:/output.txt - | tar --extract --to-stdout
+  )
+done

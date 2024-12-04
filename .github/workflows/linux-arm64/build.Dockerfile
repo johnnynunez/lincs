@@ -23,7 +23,17 @@ ADD *.tar.gz .
 RUN mv lincs-* lincs
 
 
-FROM downloader AS download-patchelf
+FROM downloader AS download-patchelf-amd64
+
+RUN set -x \
+ && wget https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz \
+ && mkdir patchelf \
+ && cd patchelf \
+ && tar xf ../patchelf-*.tar.gz \
+ && cd .. \
+ && rm patchelf-*.tar.gz
+
+FROM downloader AS download-patchelf-arm64
 
 RUN set -x \
  && wget https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-aarch64.tar.gz \
@@ -32,6 +42,8 @@ RUN set -x \
  && tar xf ../patchelf-*.tar.gz \
  && cd .. \
  && rm patchelf-*.tar.gz
+
+FROM download-patchelf-$TARGETARCH AS download-patchelf
 
 
 FROM python:$PYTHON_VERSION AS build
@@ -46,6 +58,20 @@ RUN pip3 install setuptools auditwheel build twine
 
 RUN --mount=type=bind,from=download-lincs,source=/download,target=/download,readwrite \
     set -x \
- && python3 -m build --wheel --outdir local-dist /download/lincs \
- && auditwheel repair --plat manylinux_2_35_aarch64 --strip local-dist/*.whl --wheel-dir dist \
- && twine check dist/*.whl
+ && python3 -m build --wheel --outdir local-dist /download/lincs
+
+
+FROM build AS repair-amd64
+
+RUN auditwheel repair --plat manylinux_2_35_x86_64 --strip local-dist/*.whl --wheel-dir dist
+
+FROM build AS repair-arm64
+
+RUN auditwheel repair --plat manylinux_2_35_aarch64 --strip local-dist/*.whl --wheel-dir dist
+
+FROM repair-$TARGETARCH AS repair
+
+
+FROM repair AS final
+
+RUN twine check dist/*.whl
