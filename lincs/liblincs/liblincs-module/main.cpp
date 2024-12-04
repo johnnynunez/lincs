@@ -30,4 +30,5 @@ PYBIND11_MODULE(liblincs, m) {
   lincs::enroll_converters(m);
   lincs::define_io_classes(m);
   lincs::define_generation_functions(m);
+  lincs::define_learning_classes(m);
 }

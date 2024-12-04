@@ -25,6 +25,32 @@ from liblincs import misclassify_alternatives
 from liblincs import ClassificationResult
 from liblincs import classify_alternatives
 
+# Learning
+from liblincs import PreprocessedLearningSet
+
+# Learning - weights-profiles-breed
+from liblincs import LearnMrsortByWeightsProfilesBreed
+from liblincs import InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion
+from liblincs import OptimizeWeightsUsingAlglib
+from liblincs import ImproveProfilesWithAccuracyHeuristicOnCpu
+from liblincs import ReinitializeLeastAccurate
+from liblincs import TerminateAtAccuracy
+from liblincs import TerminateAfterSeconds, TerminateAfterSecondsWithoutProgress
+from liblincs import TerminateAfterIterations, TerminateAfterIterationsWithoutProgress
+from liblincs import TerminateWhenAny
+
+# Learning - SAT by coalitions
+from liblincs import LearnUcncsBySatByCoalitionsUsingMinisat
+
+# Learning - SAT by separation
+from liblincs import LearnUcncsBySatBySeparationUsingMinisat
+
+# Learning - max-SAT by coalitions
+from liblincs import LearnUcncsByMaxSatByCoalitionsUsingEvalmaxsat
+
+# Learning - max-SAT by separation
+from liblincs import LearnUcncsByMaxSatBySeparationUsingEvalmaxsat
+
 from .visualization import visualize_classification_model as visualize_model
 from .description import describe_classification_problem as describe_problem
 from .description import describe_classification_model as describe_model
