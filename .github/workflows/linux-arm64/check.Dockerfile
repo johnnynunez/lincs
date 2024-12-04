@@ -3,7 +3,7 @@ ARG PYTHON_VERSION=3.8
 
 FROM python:$PYTHON_VERSION AS build
 
-ADD dist/*.whl .
+ADD *.whl .
 
 RUN pip3 install --find-links . --pre lincs
 

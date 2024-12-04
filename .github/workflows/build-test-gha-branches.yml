@@ -130,7 +130,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Get the code (for the Dockerfiles, not in the source distribution)
+      - name: Get the code (only for '.github/workflows/linux-arm64/build.Dockerfile')
         uses: actions/checkout@v4
 
       - name: Download the source distribution from GitHub Actions artifacts
@@ -173,13 +173,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
       # DO NOT install any other dependencies, to test that the wheels are self-contained
 
-      - name: Get the code (for the Dockerfiles, not in the distributions)
+      - name: Get the code (only for '.github/workflows/linux-arm64/check.Dockerfile')
         uses: actions/checkout@v4
 
       - name: Download the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: wheel-dist-${{ matrix.python_version }}-linux-arm64
+          merge-multiple: true
           path: wd
 
       - name: Install the wheel and run it (during a Docker build in Qemu)
