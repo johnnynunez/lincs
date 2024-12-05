@@ -189,14 +189,14 @@ void ImproveProfilesWithAccuracyHeuristicOnCpu::update_move_desirability_for_low
 
   const unsigned alternative_rank = preprocessed_learning_set.performance_ranks[criterion_index][alternative_index];
   const unsigned learning_assignment = preprocessed_learning_set.assignments[alternative_index];
-  const unsigned model_assignment = LearnMrsortByWeightsProfilesBreed::get_assignment(preprocessed_learning_set, models_being_learned, model_index, alternative_index);
+  const unsigned model_assignment = models_being_learned.get_assignment(model_index, alternative_index);
 
   // @todo(Project management, later) Factorize with get_assignment
   // (Same remark in accuracy-heuristic-on-gpu.cu)
   float accepted_weight = 0;
   // There is a 'criterion_index' parameter above, *and* a local 'crit_index' just here
   for (unsigned crit_index = 0; crit_index != preprocessed_learning_set.criteria_count; ++crit_index) {
-    if (LearnMrsortByWeightsProfilesBreed::is_accepted(preprocessed_learning_set, models_being_learned, model_index, boundary_index, crit_index, alternative_index)) {
+    if (models_being_learned.is_accepted(model_index, boundary_index, crit_index, alternative_index)) {
       accepted_weight += models_being_learned.weights[model_index][crit_index];
     }
   }
@@ -387,12 +387,12 @@ void ImproveProfilesWithAccuracyHeuristicOnCpu::update_move_desirability_for_hig
 
   const unsigned alternative_rank = preprocessed_learning_set.performance_ranks[criterion_index][alternative_index];
   const unsigned learning_assignment = preprocessed_learning_set.assignments[alternative_index];
-  const unsigned model_assignment = LearnMrsortByWeightsProfilesBreed::get_assignment(preprocessed_learning_set, models_being_learned, model_index, alternative_index);
+  const unsigned model_assignment = models_being_learned.get_assignment(model_index, alternative_index);
 
   float accepted_weight = 0;
   // There is a 'criterion_index' parameter above, *and* a local 'crit_index' just here
   for (unsigned crit_index = 0; crit_index != preprocessed_learning_set.criteria_count; ++crit_index) {
-    if (LearnMrsortByWeightsProfilesBreed::is_accepted(preprocessed_learning_set, models_being_learned, model_index, boundary_index, crit_index, alternative_index)) {
+    if (models_being_learned.is_accepted(model_index, boundary_index, crit_index, alternative_index)) {
       accepted_weight += models_being_learned.weights[model_index][crit_index];
     }
   }

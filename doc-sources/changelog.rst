@@ -46,6 +46,8 @@ Version 2.0.0 (planned 2024-12-05)
 
 - Add method ``.check_consistency_with(problem: Problem)`` to ``Model`` and ``Alternatives``
 
+- Add methods ``ModelsBeingLearned.get_model`` and ``.recompute_accuracy``
+
 Version 1.1.0 (2024-02-08)
 ==========================
 

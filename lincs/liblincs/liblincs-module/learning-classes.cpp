@@ -65,6 +65,8 @@ void define_learning_classes(py::module& m) {
     .def_readonly("weights", &lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::weights, "Indexed by ``[model_index][criterion_index]``. The current MR-Sort weight of each criterion for each model.")
     .def("get_best_accuracy", &lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::get_best_accuracy, "Return the accuracy of the best model so far.")
     .def("get_best_model", &lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::get_best_model, "Return the best model so far.")
+    .def("get_model", &lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::get_model, "model_index"_a, "Return the model at the given index.")
+    .def("recompute_accuracy", &lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::recompute_accuracy, "model_index"_a, "Recompute the accuracy of the model at the given index.")
   ;
 
   struct PyProfilesInitializationStrategy : lincs::LearnMrsortByWeightsProfilesBreed::ProfilesInitializationStrategy {

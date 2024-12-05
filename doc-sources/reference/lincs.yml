@@ -373,6 +373,8 @@ children:
               type: list[int]
             - name: get_best_accuracy
             - name: get_best_model
+            - name: get_model
+            - name: recompute_accuracy
         - name: ProfilesInitializationStrategy
           children:
             - name: __init__

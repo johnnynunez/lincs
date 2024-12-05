@@ -49,14 +49,6 @@ class LearnMrsortByWeightsProfilesBreed {
   Model perform();
 
  private:
-  unsigned compute_accuracy(unsigned model_index);
-  bool is_correctly_assigned(unsigned model_index, unsigned alternative_index);
-
- public:
-  static bool is_accepted(const PreprocessedLearningSet& preprocessed_learning_set, const ModelsBeingLearned&, unsigned model_index, unsigned boundary_index, unsigned criterion_index, unsigned alternative_index);
-  static unsigned get_assignment(const PreprocessedLearningSet& preprocessed_learning_set, const ModelsBeingLearned&, unsigned model_index, unsigned alternative_index);
-
- private:
   const PreprocessedLearningSet& preprocessed_learning_set;
   ModelsBeingLearned& models_being_learned;
   ProfilesInitializationStrategy& profiles_initialization_strategy;
@@ -88,8 +80,28 @@ struct LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned {
 
   ModelsBeingLearned(const PreprocessedLearningSet& preprocessed_learning_set, unsigned models_count, unsigned random_seed);
 
-  unsigned get_best_accuracy() const { return best_model_accuracy; }
-  Model get_best_model() const { return make_model(best_model_low_profile_ranks, best_model_high_profile_ranks, best_model_weights); }
+  Model get_model(unsigned model_index) const {
+    return make_model(low_profile_ranks[model_index], high_profile_ranks[model_index], weights[model_index]);
+  }
+
+  unsigned get_best_accuracy() const {
+    return best_model_accuracy;
+  }
+  Model get_best_model() const {
+    return make_model(best_model_low_profile_ranks, best_model_high_profile_ranks, best_model_weights);
+  }
+
+  void recompute_accuracy(unsigned model_index) {
+    accuracies[model_index] = compute_accuracy(model_index);
+  }
+
+ private:
+  unsigned compute_accuracy(unsigned model_index) const;
+  bool is_correctly_assigned(unsigned model_index, unsigned alternative_index) const;
+
+ public:
+  bool is_accepted(unsigned model_index, unsigned boundary_index, unsigned criterion_index, unsigned alternative_index) const;
+  unsigned get_assignment(unsigned model_index, unsigned alternative_index) const;
 
  private:
   Model make_model(ArrayView2D<Host, const unsigned> low_profile_ranks, ArrayView2D<Host, const unsigned> high_profile_ranks, ArrayView1D<Host, const float> weights) const;

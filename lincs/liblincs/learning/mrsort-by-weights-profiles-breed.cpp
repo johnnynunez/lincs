@@ -160,7 +160,7 @@ Model LearnMrsortByWeightsProfilesBreed::perform() {
 
     // Sort model_indexes by increasing model accuracy
     for (unsigned model_index = 0; model_index != models_being_learned.models_count; ++model_index) {
-      models_being_learned.accuracies[model_index] = compute_accuracy(model_index);
+      models_being_learned.recompute_accuracy(model_index);
     }
     std::sort(
       models_being_learned.model_indexes.begin(), models_being_learned.model_indexes.end(),
@@ -202,7 +202,7 @@ Model LearnMrsortByWeightsProfilesBreed::perform() {
   unreachable();
 }
 
-unsigned LearnMrsortByWeightsProfilesBreed::compute_accuracy(const unsigned model_index) {
+unsigned LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::compute_accuracy(const unsigned model_index) const {
   unsigned accuracy = 0;
 
   for (unsigned alternative_index = 0; alternative_index != preprocessed_learning_set.alternatives_count; ++alternative_index) {
@@ -214,39 +214,37 @@ unsigned LearnMrsortByWeightsProfilesBreed::compute_accuracy(const unsigned mode
   return accuracy;
 }
 
-bool LearnMrsortByWeightsProfilesBreed::is_correctly_assigned(
+bool LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::is_correctly_assigned(
   const unsigned model_index,
   const unsigned alternative_index
-) {
+) const {
   const unsigned expected_assignment = preprocessed_learning_set.assignments[alternative_index];
-  const unsigned actual_assignment = get_assignment(preprocessed_learning_set, models_being_learned, model_index, alternative_index);
+  const unsigned actual_assignment = get_assignment(model_index, alternative_index);
 
   return actual_assignment == expected_assignment;
 }
 
-bool LearnMrsortByWeightsProfilesBreed::is_accepted(
-  const PreprocessedLearningSet& preprocessed_learning_set,
-  const LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned& models_being_learned,
+bool LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::is_accepted(
   const unsigned model_index,
   const unsigned boundary_index,
   const unsigned criterion_index,
   const unsigned alternative_index
-) {
+) const {
   const unsigned alternative_rank = preprocessed_learning_set.performance_ranks[criterion_index][alternative_index];
-  const unsigned low_profile_rank = models_being_learned.low_profile_ranks[model_index][boundary_index][criterion_index];
+  const unsigned low_profile_rank = low_profile_ranks[model_index][boundary_index][criterion_index];
   if (preprocessed_learning_set.single_peaked[criterion_index]) {
-    const unsigned high_profile_rank = models_being_learned.high_profile_ranks[model_index][boundary_index][models_being_learned.high_profile_rank_indexes[criterion_index]];
+    const unsigned high_profile_rank = high_profile_ranks[model_index][boundary_index][high_profile_rank_indexes[criterion_index]];
     return low_profile_rank <= alternative_rank && alternative_rank <= high_profile_rank;
   } else {
     return low_profile_rank <= alternative_rank;
   }
 }
 
-unsigned LearnMrsortByWeightsProfilesBreed::get_assignment(const PreprocessedLearningSet& preprocessed_learning_set, const ModelsBeingLearned& models_being_learned, const unsigned model_index, const unsigned alternative_index) {
+unsigned LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned::get_assignment(const unsigned model_index, const unsigned alternative_index) const {
   // @todo(Performance, later) Evaluate if it's worth storing and updating the models' assignments
   // (instead of recomputing them here)
   // Same question in accuracy-heuristic-on-gpu.cu
-  assert(model_index < models_being_learned.models_count);
+  assert(model_index < models_count);
   assert(alternative_index < preprocessed_learning_set.alternatives_count);
 
   // Not parallelizable in this form because the loop gets interrupted by a return. But we could rewrite it
@@ -256,8 +254,8 @@ unsigned LearnMrsortByWeightsProfilesBreed::get_assignment(const PreprocessedLea
     const unsigned boundary_index = category_index - 1;
     float accepted_weight = 0;
     for (unsigned criterion_index = 0; criterion_index != preprocessed_learning_set.criteria_count; ++criterion_index) {
-      if (is_accepted(preprocessed_learning_set, models_being_learned, model_index, boundary_index, criterion_index, alternative_index)) {
-        accepted_weight += models_being_learned.weights[model_index][criterion_index];
+      if (is_accepted(model_index, boundary_index, criterion_index, alternative_index)) {
+        accepted_weight += weights[model_index][criterion_index];
       }
     }
     if (accepted_weight >= 1) {

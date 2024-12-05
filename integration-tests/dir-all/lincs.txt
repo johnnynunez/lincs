@@ -180,6 +180,7 @@ lincs: module
                 accuracies: property
                 get_best_accuracy: instancemethod
                 get_best_model: instancemethod
+                get_model: instancemethod
                 high_profile_rank_indexes: property
                 high_profile_ranks: property
                 iteration_index: property
@@ -187,6 +188,7 @@ lincs: module
                 model_indexes: property
                 models_count: property
                 random_generators: property
+                recompute_accuracy: instancemethod
                 weights: property
             Observer: pybind11_type
                 __init__: instancemethod

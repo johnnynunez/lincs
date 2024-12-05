@@ -67,7 +67,7 @@ void OptimizeWeightsUsingLinearProgram<LinearProgram>::optimize_model_weights(un
       c.set_coefficient(x_variables[alternative_index], -1);
       c.set_coefficient(xp_variables[alternative_index], 1);
       for (unsigned criterion_index = 0; criterion_index != preprocessed_learning_set.criteria_count; ++criterion_index) {
-        if (LearnMrsortByWeightsProfilesBreed::is_accepted(preprocessed_learning_set, models_being_learned, model_index, boundary_index, criterion_index, alternative_index)) {
+        if (models_being_learned.is_accepted(model_index, boundary_index, criterion_index, alternative_index)) {
           c.set_coefficient(weight_variables[criterion_index], 1);
         }
       }
@@ -80,7 +80,7 @@ void OptimizeWeightsUsingLinearProgram<LinearProgram>::optimize_model_weights(un
       c.set_coefficient(y_variables[alternative_index], 1);
       c.set_coefficient(yp_variables[alternative_index], -1);
       for (unsigned criterion_index = 0; criterion_index != preprocessed_learning_set.criteria_count; ++criterion_index) {
-        if (LearnMrsortByWeightsProfilesBreed::is_accepted(preprocessed_learning_set, models_being_learned, model_index, boundary_index, criterion_index, alternative_index)) {
+        if (models_being_learned.is_accepted(model_index, boundary_index, criterion_index, alternative_index)) {
           c.set_coefficient(weight_variables[criterion_index], 1);
         }
       }

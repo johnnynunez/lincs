@@ -904,6 +904,14 @@
 
                     Return the best model so far.
 
+                .. method:: get_model(model_index: int) -> Model
+
+                    Return the model at the given index.
+
+                .. method:: recompute_accuracy(model_index: int)
+
+                    Recompute the accuracy of the model at the given index.
+
             .. class:: ProfilesInitializationStrategy
 
                 Abstract base class for profiles initialization strategies.
