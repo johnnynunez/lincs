@@ -4,6 +4,7 @@
 
 #include "../../../chrones.hpp"
 #include "../../../linear-programming/alglib.hpp"
+#include "../../../linear-programming/glop.hpp"
 
 
 namespace lincs {
@@ -93,6 +94,7 @@ void OptimizeWeightsUsingLinearProgram<LinearProgram>::optimize_model_weights(un
   }
 }
 
+template class OptimizeWeightsUsingLinearProgram<GlopLinearProgram>;
 template class OptimizeWeightsUsingLinearProgram<AlglibLinearProgram>;
 
 }  // namespace lincs

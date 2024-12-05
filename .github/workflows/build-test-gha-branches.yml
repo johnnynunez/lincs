@@ -41,6 +41,13 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
         run: pip${{ matrix.python_version }} install build auditwheel twine Chrones
+      - name: Install CUDA
+        run: |
+          sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
+          sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-4 cuda-nvcc-12-4
+          echo "/usr/local/cuda-12.4/bin" >>$GITHUB_PATH
       - name: Install Boost
         run: |
             cd /home/runner/work
@@ -49,6 +56,16 @@ jobs:
             rm boost_*.tar.gz
             cd boost_*
             sudo cp -r boost /usr/local/include
+      - name: Install OR-Tools
+        run: |
+            cd /home/runner/work
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_*.tar.gz
+            rm or-tools_*.tar.gz
+            cd or-tools_*
+            sudo cp -r include/* /usr/local/include
+            sudo cp -r lib/* /usr/local/lib
+            sudo ldconfig
       - name: Install patchelf
         run: |
             cd /home/runner/work
@@ -69,6 +86,9 @@ jobs:
 
       - name: Build the wheel
         run: python${{ matrix.python_version }} -m build --wheel --outdir local-dist lincs-*
+        env:
+          LINCS_DEV_FORCE_NVCC: "true"
+          LINCS_DEV_FORCE_CHRONES: "true"
       - name: Make the wheel machine-independent
         run: auditwheel repair --plat manylinux_2_31_x86_64 --strip local-dist/*.whl --wheel-dir dist
       - name: Check the wheel
@@ -124,7 +144,9 @@ jobs:
       - run: lincs --help
       - run: lincs generate classification-problem 3 2 | tee problem.yml
       - run: lincs generate classification-model problem.yml | tee model.yml
-      - run: lincs generate classified-alternatives problem.yml model.yml 100
+      - run: lincs generate classified-alternatives problem.yml model.yml 100 | tee learning-set.csv
+      - run: lincs learn classification-model problem.yml learning-set.csv | tee learned-model.yml
+      - run: lincs classification-accuracy problem.yml learned-model.yml learning-set.csv
 
   build-for-linux-arm64:
     runs-on: ubuntu-20.04

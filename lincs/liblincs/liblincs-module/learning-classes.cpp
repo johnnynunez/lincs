@@ -285,6 +285,29 @@ void define_learning_classes(py::module& m) {
   ;
 
   py::class_<
+    lincs::OptimizeWeightsUsingGlop,
+    lincs::LearnMrsortByWeightsProfilesBreed::WeightsOptimizationStrategy
+  >(
+    m,
+    "OptimizeWeightsUsingGlop",
+    "The weights optimization strategy described in Olivier Sobrie's PhD thesis. The linear program is solved using GLOP."
+  )
+    .def(
+      py::init<const lincs::PreprocessedLearningSet&, lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned&>(),
+      "preprocessed_learning_set"_a, "models_being_learned"_a,
+      "Constructor. Keeps a reference to the learning data.",
+      py::keep_alive<1, 2>(),
+      py::keep_alive<1, 3>()
+    )
+    .def(
+      "optimize_weights",
+      &lincs::OptimizeWeightsUsingGlop::optimize_weights,
+      "model_indexes_begin"_a, "model_indexes_end"_a,
+      "Overrides the base method."
+    )
+  ;
+
+  py::class_<
     lincs::OptimizeWeightsUsingAlglib,
     lincs::LearnMrsortByWeightsProfilesBreed::WeightsOptimizationStrategy
   >(
@@ -329,6 +352,31 @@ void define_learning_classes(py::module& m) {
       "Overrides the base method."
     )
   ;
+
+  #ifdef LINCS_HAS_NVCC
+  py::class_<
+    lincs::ImproveProfilesWithAccuracyHeuristicOnGpu,
+    lincs::LearnMrsortByWeightsProfilesBreed::ProfilesImprovementStrategy
+  >(
+    m,
+    "ImproveProfilesWithAccuracyHeuristicOnGpu",
+    "The profiles improvement strategy described in Olivier Sobrie's PhD thesis. Run on the CUDA-capable GPU."
+  )
+    .def(
+      py::init<const lincs::PreprocessedLearningSet&, lincs::LearnMrsortByWeightsProfilesBreed::ModelsBeingLearned&>(),
+      "preprocessed_learning_set"_a, "models_being_learned"_a,
+      "Constructor. Keeps a reference to the learning data.",
+      py::keep_alive<1, 2>(),
+      py::keep_alive<1, 3>()
+    )
+    .def(
+      "improve_profiles",
+      &lincs::ImproveProfilesWithAccuracyHeuristicOnGpu::improve_profiles,
+      "model_indexes_begin"_a, "model_indexes_end"_a,
+      "Overrides the base method."
+    )
+  ;
+  #endif  // LINCS_HAS_NVCC
 
   py::class_<
     lincs::ReinitializeLeastAccurate,

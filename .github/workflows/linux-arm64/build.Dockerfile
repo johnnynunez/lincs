@@ -1,6 +1,3 @@
-ARG PYTHON_VERSION=3.8
-
-
 FROM --platform=$BUILDPLATFORM ubuntu:20.04 AS downloader
 
 RUN set -x \
@@ -55,9 +52,85 @@ RUN set -x \
 FROM download-patchelf-$TARGETARCH AS download-patchelf
 
 
-FROM python:$PYTHON_VERSION AS build
+FROM downloader AS download-or-tools-amd64
 
-WORKDIR /wd
+RUN set -x \
+ && wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz \
+ && tar xf or-tools_*.tar.gz \
+ && rm or-tools_*.tar.gz \
+ && mv or-tools_* or-tools
+
+FROM downloader AS download-or-tools-arm64
+# @todo Build OR-Tools for ARM64 (or the subset of OR-Tools that we need)
+
+RUN set -x \
+ && wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz \
+ && tar xf or-tools_*.tar.gz \
+ && rm or-tools_*.tar.gz \
+ && mv or-tools_* or-tools
+
+FROM download-or-tools-$TARGETARCH AS download-or-tools
+
+
+FROM downloader AS download-get-pip
+
+RUN set -x \
+ && wget https://bootstrap.pypa.io/get-pip.py
+
+
+FROM ubuntu:20.04 AS build
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -x \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+      ccache \
+      dirmngr \
+      docker.io \
+      g++ \
+      git \
+      gpg-agent \
+      graphviz \
+      jq \
+      pandoc \
+      python3-dev \
+      python3-venv \
+      software-properties-common \
+      ssh \
+      sudo
+
+ARG PYTHON_VERSION
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    --mount=type=bind,from=download-get-pip,source=/download,target=/download \
+    set -x \
+ && add-apt-repository ppa:deadsnakes/ppa \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+      $(echo "python$PYTHON_VERSION-dev\npython$PYTHON_VERSION-distutils\npython$PYTHON_VERSION-venv" | grep -v python3.13-distutils) \
+ && python$PYTHON_VERSION /download/get-pip.py
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -x \
+ && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub \
+ && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+      cuda-cudart-dev-12-4 \
+      cuda-nvcc-12-4
+ENV PATH=$PATH:/usr/local/cuda-12.4/bin
+# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#     --mount=type=cache,target=/var/lib/apt,sharing=locked \
+#     set -x \
+#  && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/3bf863cc.pub \
+#  && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/ /" \
+#  && apt-get update \
+#  && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+#       cuda-cudart-dev-12-2 \
+#       cuda-nvcc-12-2
+# ENV PATH=$PATH:/usr/local/cuda-12.2/bin
 
 RUN --mount=type=bind,from=download-patchelf,source=/download,target=/download \
     set -x \
@@ -67,11 +140,20 @@ RUN --mount=type=bind,from=download-boost,source=/download,target=/download,read
     set -x \
  && cp -r /download/boost/boost /usr/local/include
 
-RUN pip3 install setuptools auditwheel build twine
+RUN --mount=type=bind,from=download-or-tools,source=/download,target=/download \
+    set -x \
+ && cp -r /download/or-tools/include/* /usr/local/include \
+ && cp -r /download/or-tools/lib/libortools.so* /usr/local/lib \
+ && ldconfig
+
+RUN pip3 install setuptools auditwheel build twine Chrones
+
+WORKDIR /wd
 
 RUN --mount=type=bind,from=download-lincs,source=/download,target=/download,readwrite \
     set -x \
- && python3 -m build --wheel --outdir local-dist /download/lincs
+ && rm /download/lincs/lincs/liblincs/learning.cpp `# Do not waste time compiling tests in Qemu` \
+ && LINCS_DEV_FORCE_NVCC=true LINCS_DEV_FORCE_CHRONES=true python3 -m build --wheel --outdir local-dist /download/lincs
 
 
 FROM build AS repair-amd64

@@ -31,8 +31,12 @@ from liblincs import PreprocessedLearningSet
 # Learning - weights-profiles-breed
 from liblincs import LearnMrsortByWeightsProfilesBreed
 from liblincs import InitializeProfilesForProbabilisticMaximalDiscriminationPowerPerCriterion
-from liblincs import OptimizeWeightsUsingAlglib
+from liblincs import OptimizeWeightsUsingGlop, OptimizeWeightsUsingAlglib
 from liblincs import ImproveProfilesWithAccuracyHeuristicOnCpu
+try:
+    from liblincs import ImproveProfilesWithAccuracyHeuristicOnGpu
+except ImportError:
+    pass
 from liblincs import ReinitializeLeastAccurate
 from liblincs import TerminateAtAccuracy
 from liblincs import TerminateAfterSeconds, TerminateAfterSecondsWithoutProgress

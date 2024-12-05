@@ -7,6 +7,7 @@
 #include <random>
 
 #include "alglib.hpp"
+#include "glop.hpp"
 
 #include "../vendored/doctest.h"  // Keep last because it defines really common names like CHECK that we don't want injected into other headers
 
@@ -31,6 +32,7 @@ inline float relative_difference(float a, float b) {
 
 
 typedef std::tuple<
+  lincs::GlopLinearProgram,
   lincs::AlglibLinearProgram
 > LinearPrograms;
 
