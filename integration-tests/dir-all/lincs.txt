@@ -83,6 +83,7 @@ lincs: module
             __init__: instancemethod
             __setstate__: instancemethod
             alternatives: property
+            check_consistency_with: instancemethod
             dump: instancemethod
             load: builtin_function_or_method
         BalancedAlternativesGenerationException: type
@@ -223,6 +224,7 @@ lincs: module
             __init__: instancemethod
             __setstate__: instancemethod
             accepted_values: property
+            check_consistency_with: instancemethod
             dump: instancemethod
             load: builtin_function_or_method
             sufficient_coalitions: property

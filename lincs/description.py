@@ -132,6 +132,8 @@ def describe_classification_model(problem: Problem, model: Model) -> Iterable[st
     Generate a human-readable description of a classification model.
     """
 
+    model.check_consistency_with(problem)
+
     criteria_count = len(problem.criteria)
     assert len(model.accepted_values) == criteria_count
     assert criteria_count > 0

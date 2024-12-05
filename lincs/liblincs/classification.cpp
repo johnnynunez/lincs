@@ -123,6 +123,9 @@ bool accepted_by_category(
 ClassificationResult classify_alternatives(const Problem& problem, const Model& model, Alternatives* alternatives) {
   CHRONE();
 
+  model.check_consistency_with(problem);
+  alternatives->check_consistency_with(problem);
+
   const unsigned categories_count = problem.get_ordered_categories().size();
   const unsigned alternatives_count = alternatives->get_alternatives().size();
 

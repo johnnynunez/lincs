@@ -134,6 +134,8 @@ class Alternatives {
  public:
   Alternatives(const Problem&, const std::vector<Alternative>&);
 
+  void check_consistency_with(const Problem&) const;
+
   Alternatives(Internal, const std::vector<Alternative>& alternatives_) : alternatives(alternatives_) {}
 
  public:

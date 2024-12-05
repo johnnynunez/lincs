@@ -237,6 +237,7 @@ children:
     - name: Model
       children:
         - name: __init__
+        - name: check_consistency_with
         - name: accepted_values
           type: list[AcceptedValues]
         - name: sufficient_coalitions
@@ -290,6 +291,7 @@ children:
     - name: Alternatives
       children:
         - name: __init__
+        - name: check_consistency_with
         - name: alternatives
           type: list[Alternative]
         - name: dump

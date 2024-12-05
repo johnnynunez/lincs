@@ -571,6 +571,7 @@ void define_model_classes(py::module& m) {
       "problem"_a, "accepted_values"_a, "sufficient_coalitions"_a,
       "The :py:class:`Model` being initialized must correspond to the given :py:class:`Problem`. Other parameters map exactly to attributes with identical names."
     )
+    .def("check_consistency_with", &lincs::Model::check_consistency_with, "problem"_a, "Raise :py:class:`DataValidationException` if the model is not consistent with the provided problem.")
     .def_property_readonly("accepted_values", &lincs::Model::get_accepted_values, "The accepted values for each criterion.")
     .def_property_readonly("sufficient_coalitions", &lincs::Model::get_sufficient_coalitions, "The sufficient coalitions for each category.")
     .def(
@@ -748,6 +749,7 @@ void define_alternative_classes(py::module& m) {
       "problem"_a, "alternatives"_a,
       "The :py:class:`Alternatives` being initialized must correspond to the given :py:class:`Problem`. Other parameters map exactly to attributes with identical names."
     )
+    .def("check_consistency_with", &lincs::Alternatives::check_consistency_with, "problem"_a, "Raise :py:class:`DataValidationException` if these alternatives are not consistent with the provided problem.")
     .def_property_readonly("alternatives", &lincs::Alternatives::get_alternatives, "The :py:class:`Alternative` objects in this set.")
     .def(
       "dump",

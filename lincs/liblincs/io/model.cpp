@@ -177,6 +177,10 @@ Model::Model(const Problem& problem, const std::vector<AcceptedValues>& accepted
   accepted_values(accepted_values_),
   sufficient_coalitions(sufficient_coalitions_)
 {
+  check_consistency_with(problem);
+}
+
+void Model::check_consistency_with(const Problem& problem) const {
   const unsigned criteria_count = problem.get_criteria().size();
   const unsigned categories_count = problem.get_ordered_categories().size();
   const unsigned boundaries_count = categories_count - 1;
@@ -383,6 +387,8 @@ Model::Model(const Problem& problem, const std::vector<AcceptedValues>& accepted
 
 void Model::dump(const Problem& problem, std::ostream& os) const {
   CHRONE();
+
+  check_consistency_with(problem);
 
   #ifdef NDEBUG
   YAML::Emitter out(os);

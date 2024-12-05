@@ -297,6 +297,8 @@ class Model {
  public:
   Model(const Problem&, const std::vector<AcceptedValues>&, const std::vector<SufficientCoalitions>&);
 
+  void check_consistency_with(const Problem&) const;
+
   Model(Internal, const std::vector<AcceptedValues>& accepted_values_, const std::vector<SufficientCoalitions>& sufficient_coalitions_) :
     accepted_values(accepted_values_),
     sufficient_coalitions(sufficient_coalitions_)

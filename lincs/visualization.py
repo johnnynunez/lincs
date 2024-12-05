@@ -6,7 +6,7 @@ import unittest
 
 import matplotlib.pyplot
 
-from .classification import Problem, Model, Alternative
+from .classification import Problem, Model, Alternative, Alternatives
 
 
 single_peaked_not_supported_message = "Single-peaked criteria are not yet supported by the visualization. See https://github.com/MICS-Lab/lincs/discussions/21 and maybe contribute your ideas?"
@@ -16,6 +16,9 @@ def visualize_classification_model(problem: Problem, model: Model, alternatives:
     """
     Create a visual representation of a classification model and classified alternatives, using Matplotlib.
     """
+
+    model.check_consistency_with(problem)
+    Alternatives(problem, alternatives)  # Check consistency
 
     criteria_count = len(problem.criteria)
     assert criteria_count >= 1

@@ -44,6 +44,8 @@ Version 2.0.0 (planned 2024-12-05)
 
 - **Changes behavior slightly** Upgrade to OR-Tools 9.11 and CUDA 12.4
 
+- Add method ``.check_consistency_with(problem: Problem)`` to ``Model`` and ``Alternatives``
+
 Version 1.1.0 (2024-02-08)
 ==========================
 

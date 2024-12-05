@@ -1016,6 +1016,162 @@ class AlternativesTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.args[0], "The performance of an alternative must be int the enumerated values for a criterion in the problem")
 
 
+class ProblemModelAlternativesConsistencyCheckTestCase(unittest.TestCase):
+    def test_matching_problems_are_interchangeable__alternatives(self):
+        problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.RealValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        other_problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.RealValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        model = Model(
+            problem,
+            [
+                AcceptedValues(AcceptedValues.RealThresholds([5])),
+            ],
+            [
+                SufficientCoalitions(SufficientCoalitions.Weights([0.5])),
+            ],
+        )
+        alternatives = Alternatives(
+            other_problem,
+            [
+                Alternative("First alternative", [Performance(Performance.Real(5))], 0),
+            ],
+        )
+
+        # Just check this does not raise an exception
+        classify_alternatives(problem, model, alternatives)
+
+    def test_matching_problems_are_interchangeable__model(self):
+        problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.RealValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        other_problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.RealValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        model = Model(
+            other_problem,
+            [
+                AcceptedValues(AcceptedValues.RealThresholds([5])),
+            ],
+            [
+                SufficientCoalitions(SufficientCoalitions.Weights([0.5])),
+            ],
+        )
+        alternatives = Alternatives(
+            problem,
+            [
+                Alternative("First alternative", [Performance(Performance.Real(5))], 0),
+            ],
+        )
+
+        # Just check this does not raise an exception
+        classify_alternatives(problem, model, alternatives)
+
+    def test_mismatch_criterion_type_vs_performance(self):
+        problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.RealValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        other_problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.IntegerValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        model = Model(
+            problem,
+            [
+                AcceptedValues(AcceptedValues.RealThresholds([5])),
+            ],
+            [
+                SufficientCoalitions(SufficientCoalitions.Weights([0.5])),
+            ],
+        )
+        alternatives = Alternatives(
+            other_problem,
+            [
+                Alternative("First alternative", [Performance(Performance.Integer(5))], 0),
+            ],
+        )
+
+        with self.assertRaises(DataValidationException) as cm:
+            classify_alternatives(problem, model, alternatives)
+        self.assertEqual(cm.exception.args[0], "The type of the performance of an alternative must match the type of the real-valued criterion in the problem")
+
+    def test_mismatch_criterion_type_vs_performance(self):
+        problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.RealValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        other_problem = Problem(
+            criteria=[
+                Criterion("Criterion 1", Criterion.IntegerValues(Criterion.PreferenceDirection.increasing, 0, 10)),
+            ],
+            ordered_categories=[
+                Category("Bad"),
+                Category("Good"),
+            ],
+        )
+        model = Model(
+            other_problem,
+            [
+                AcceptedValues(AcceptedValues.IntegerThresholds([5])),
+            ],
+            [
+                SufficientCoalitions(SufficientCoalitions.Weights([0.5])),
+            ],
+        )
+        alternatives = Alternatives(
+            problem,
+            [
+                Alternative("First alternative", [Performance(Performance.Real(5))], 0),
+            ],
+        )
+
+        with self.assertRaises(DataValidationException) as cm:
+            classify_alternatives(problem, model, alternatives)
+        self.assertEqual(cm.exception.args[0], "The value type of an accepted values descriptor must be the same as the value type of the corresponding criterion")
+
+
 class LearningTestCase(unittest.TestCase):
     def test_access_preprocessed_learning_set(self):
         problem = generate_problem(5, 3, 41, allowed_preference_directions=[Criterion.PreferenceDirection.increasing, Criterion.PreferenceDirection.single_peaked])

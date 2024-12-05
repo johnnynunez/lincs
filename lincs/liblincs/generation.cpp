@@ -655,6 +655,8 @@ Alternatives generate_classified_alternatives(
 ) {
   CHRONE();
 
+  model.check_consistency_with(problem);
+
   std::mt19937 gen(random_seed);
 
   Alternatives alternatives = max_imbalance ?
@@ -874,6 +876,8 @@ TEST_CASE("Exploratory test: 'std::shuffle' *can* keep something in place") {
 
 void misclassify_alternatives(const Problem& problem, Alternatives* alternatives, const unsigned count, const unsigned random_seed) {
   CHRONE();
+
+  alternatives->check_consistency_with(problem);
 
   const unsigned categories_count = problem.get_ordered_categories().size();
   const unsigned alternatives_count = alternatives->get_alternatives().size();

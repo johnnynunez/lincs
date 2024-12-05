@@ -550,6 +550,10 @@
 
                 The :py:class:`Model` being initialized must correspond to the given :py:class:`Problem`. Other parameters map exactly to attributes with identical names.
 
+            .. method:: check_consistency_with(problem: Problem)
+
+                Raise :py:class:`DataValidationException` if the model is not consistent with the provided problem.
+
             .. property:: accepted_values
                 :type: list[AcceptedValues]
 
@@ -696,6 +700,10 @@
             .. method:: __init__(problem: Problem, alternatives: list[Alternative])
 
                 The :py:class:`Alternatives` being initialized must correspond to the given :py:class:`Problem`. Other parameters map exactly to attributes with identical names.
+
+            .. method:: check_consistency_with(problem: Problem)
+
+                Raise :py:class:`DataValidationException` if these alternatives are not consistent with the provided problem.
 
             .. property:: alternatives
                 :type: list[Alternative]

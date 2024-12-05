@@ -25,6 +25,8 @@ PreprocessedLearningSet::PreprocessedLearningSet(
   performance_ranks(criteria_count, alternatives_count, uninitialized),
   assignments(alternatives_count, uninitialized)
 {
+  learning_set.check_consistency_with(problem);
+
   for (unsigned criterion_index = 0; criterion_index != criteria_count; ++criterion_index) {
     dispatch(
       problem.get_criteria()[criterion_index].get_values(),
