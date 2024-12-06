@@ -48,7 +48,7 @@ Version 2.0.0 (planned 2024-12-05)
 
 - Add methods ``ModelsBeingLearned.get_model`` and ``.recompute_accuracy``
 
-Version 1.1.0 (2024-02-08)
+Version 1.1.0 (2024-02-09)
 ==========================
 
 Publish the Python API
