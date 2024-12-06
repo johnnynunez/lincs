@@ -18,13 +18,11 @@ properties:
             name:
               type: string
             value_type:
-              description: May be extended in the future to handle criteria with integer values, or explicitly enumerated values.
               type: string
               enum: [real, integer]
             preference_direction:
-              description: May be extended in the future to handle single-peaked criteria, or criteria with unknown preference direction.
               type: string
-              enum: [increasing, isotone, decreasing, antitone]
+              enum: [increasing, isotone, decreasing, antitone, single-peaked]
             min_value:
               type: number
             max_value:

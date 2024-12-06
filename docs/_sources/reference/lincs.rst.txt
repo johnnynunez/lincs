@@ -122,6 +122,12 @@
 
                     For criteria where lower numerical values are known to be better.
 
+                .. property:: single_peaked
+                    :classmethod:
+                    :type: lincs.classification.Criterion.PreferenceDirection
+
+                    For criteria where intermediate numerical values are known to be better.
+
                 .. property:: isotone
                     :classmethod:
                     :type: lincs.classification.Criterion.PreferenceDirection
@@ -167,6 +173,11 @@
 
                     ``True`` if the criterion has decreasing preference direction.
 
+                .. property:: is_single_peaked
+                    :type: bool
+
+                    ``True`` if the criterion has single-peaked preference direction.
+
             .. property:: real_values
                 :type: RealValues
 
@@ -205,6 +216,11 @@
 
                     ``True`` if the criterion has decreasing preference direction.
 
+                .. property:: is_single_peaked
+                    :type: bool
+
+                    ``True`` if the criterion has single-peaked preference direction.
+
             .. property:: integer_values
                 :type: IntegerValues
 
@@ -214,7 +230,7 @@
 
                 Descriptor of the enumerated values allowed for a criterion.
 
-                .. method:: __init__(ordered_values: Iterable[str])
+                .. method:: __init__(ordered_values: list[str])
 
                     Parameters map exactly to attributes with identical names.
 
@@ -223,7 +239,7 @@
                     Get the rank of a given value.
 
                 .. property:: ordered_values
-                    :type: Iterable[str]
+                    :type: list[str]
 
                     The values for this criterion, from the worst to the best.
 
@@ -249,17 +265,17 @@
 
             A classification problem, with criteria and categories.
 
-            .. method:: __init__(criteria: Iterable[Criterion], ordered_categories: Iterable[Category])
+            .. method:: __init__(criteria: list[Criterion], ordered_categories: list[Category])
 
                 Parameters map exactly to attributes with identical names.
 
             .. property:: criteria
-                :type: Iterable[Criterion]
+                :type: list[Criterion]
 
                 The criteria of this problem.
 
             .. property:: ordered_categories
-                :type: Iterable[Category]
+                :type: list[Category]
 
                 The categories of this problem, from the worst to the best.
 
@@ -295,6 +311,16 @@
 
                 Constructor for thresholds on an enumerated criterion.
 
+            .. method:: __init__(values: RealIntervals)
+                :noindex:
+
+                Constructor for intervals on a real-valued criterion.
+
+            .. method:: __init__(values: IntegerIntervals)
+                :noindex:
+
+                Constructor for intervals on an integer-valued criterion.
+
             .. property:: value_type
                 :type: ValueType
 
@@ -325,6 +351,12 @@
 
                     A threshold for each category.
 
+                .. property:: intervals
+                    :classmethod:
+                    :type: lincs.classification.AcceptedValues.Kind
+
+                    An interval for each category.
+
             .. property:: kind
                 :type: AcceptedValues.Kind
 
@@ -335,16 +367,21 @@
 
                 ``True`` if the descriptor is a set of thresholds.
 
+            .. property:: is_intervals
+                :type: bool
+
+                ``True`` if the descriptor is a set of intervals.
+
             .. class:: RealThresholds
 
                 Descriptor for thresholds for an real-valued criterion.
 
-                .. method:: __init__(thresholds: Iterable[float])
+                .. method:: __init__(thresholds: list[Optional[float]])
 
                     Parameters map exactly to attributes with identical names.
 
                 .. property:: thresholds
-                    :type: Iterable[float]
+                    :type: list[Optional[float]]
 
                     The thresholds for this descriptor.
 
@@ -357,12 +394,12 @@
 
                 Descriptor for thresholds for an integer-valued criterion.
 
-                .. method:: __init__(thresholds: Iterable[int])
+                .. method:: __init__(thresholds: list[Optional[int]])
 
                     Parameters map exactly to attributes with identical names.
 
                 .. property:: thresholds
-                    :type: Iterable[int]
+                    :type: list[Optional[int]]
 
                     The thresholds for this descriptor.
 
@@ -375,12 +412,12 @@
 
                 Descriptor for thresholds for a criterion taking enumerated values.
 
-                .. method:: __init__(thresholds: Iterable[str])
+                .. method:: __init__(thresholds: list[Optional[str]])
 
                     Parameters map exactly to attributes with identical names.
 
                 .. property:: thresholds
-                    :type: Iterable[str]
+                    :type: list[Optional[str]]
 
                     The thresholds for this descriptor.
 
@@ -388,6 +425,42 @@
                 :type: EnumeratedThresholds
 
                 Descriptor of the enumerated thresholds, accessible if ``is_enumerated and is_thresholds``.
+
+            .. class:: RealIntervals
+
+                Descriptor for intervals for an real-valued criterion.
+
+                .. method:: __init__(intervals: list[Optional[tuple[float, float]]])
+
+                    Parameters map exactly to attributes with identical names.
+
+                .. property:: intervals
+                    :type: list[Optional[tuple[float, float]]]
+
+                    The intervals for this descriptor.
+
+            .. property:: real_intervals
+                :type: RealIntervals
+
+                Descriptor of the real intervals, accessible if ``is_real and is_intervals``.
+
+            .. class:: IntegerIntervals
+
+                Descriptor for intervals for an integer-valued criterion.
+
+                .. method:: __init__(intervals: list[Optional[tuple[int, int]]])
+
+                    Parameters map exactly to attributes with identical names.
+
+                .. property:: intervals
+                    :type: list[Optional[tuple[int, int]]]
+
+                    The intervals for this descriptor.
+
+            .. property:: integer_intervals
+                :type: IntegerIntervals
+
+                Descriptor of the integer intervals, accessible if ``is_integer and is_intervals``.
 
         .. class:: SufficientCoalitions
 
@@ -437,12 +510,12 @@
 
                 Descriptor for sufficient coalitions defined by weights.
 
-                .. method:: __init__(criterion_weights: Iterable[float])
+                .. method:: __init__(criterion_weights: list[float])
 
                     Parameters map exactly to attributes with identical names.
 
                 .. property:: criterion_weights
-                    :type: Iterable[float]
+                    :type: list[float]
 
                     The weights for each criterion.
 
@@ -455,12 +528,12 @@
 
                 Descriptor for sufficient coalitions defined by roots.
 
-                .. method:: __init__(problem: Problem, upset_roots: Iterable[Iterable[int]])
+                .. method:: __init__(problem: Problem, upset_roots: list[list[int]])
 
                     Parameters map exactly to attributes with identical names.
 
                 .. property:: upset_roots
-                    :type: Iterable[Iterable[int]]
+                    :type: list[list[int]]
 
                     The roots of the upset of sufficient coalitions.
 
@@ -473,17 +546,21 @@
 
             An NCS classification model.
 
-            .. method:: __init__(problem: Problem, accepted_values: Iterable[AcceptedValues], sufficient_coalitions: Iterable[SufficientCoalitions])
+            .. method:: __init__(problem: Problem, accepted_values: list[AcceptedValues], sufficient_coalitions: list[SufficientCoalitions])
 
                 The :py:class:`Model` being initialized must correspond to the given :py:class:`Problem`. Other parameters map exactly to attributes with identical names.
 
+            .. method:: check_consistency_with(problem: Problem)
+
+                Raise :py:class:`DataValidationException` if the model is not consistent with the provided problem.
+
             .. property:: accepted_values
-                :type: Iterable[AcceptedValues]
+                :type: list[AcceptedValues]
 
                 The accepted values for each criterion.
 
             .. property:: sufficient_coalitions
-                :type: Iterable[SufficientCoalitions]
+                :type: list[SufficientCoalitions]
 
                 The sufficient coalitions for each category.
 
@@ -597,7 +674,7 @@
 
             An alternative, with its performance on each criterion, maybe classified.
 
-            .. method:: __init__(name: str, profile: Iterable[Performance], category_index: Optional[float]=None)
+            .. method:: __init__(name: str, profile: list[Performance], category_index: Optional[int]=None)
 
                 Parameters map exactly to attributes with identical names.
 
@@ -607,7 +684,7 @@
                 The name of the alternative.
 
             .. property:: profile
-                :type: Iterable[Performance]
+                :type: list[Performance]
 
                 The performance profile of the alternative.
 
@@ -620,12 +697,16 @@
 
             A set of alternatives, maybe classified.
 
-            .. method:: __init__(problem: Problem, alternatives: Iterable[Alternative])
+            .. method:: __init__(problem: Problem, alternatives: list[Alternative])
 
                 The :py:class:`Alternatives` being initialized must correspond to the given :py:class:`Problem`. Other parameters map exactly to attributes with identical names.
 
+            .. method:: check_consistency_with(problem: Problem)
+
+                Raise :py:class:`DataValidationException` if these alternatives are not consistent with the provided problem.
+
             .. property:: alternatives
-                :type: Iterable[Alternative]
+                :type: list[Alternative]
 
                 The :py:class:`Alternative` objects in this set.
 
@@ -638,7 +719,7 @@
 
                 Load a set of alternatives (classified or not) from the provided ``.read``-supporting file-like object, in CSV format.
 
-        .. function:: generate_problem(criteria_count: int, categories_count: int, random_seed: int, normalized_min_max: bool=True, allowed_preference_directions: Iterable[PreferenceDirection]=[], allowed_value_types: Iterable[ValueType]=[]) -> Problem
+        .. function:: generate_problem(criteria_count: int, categories_count: int, random_seed: int, normalized_min_max: bool=True, allowed_preference_directions: list[PreferenceDirection]=[PreferenceDirection.increasing], allowed_value_types: list[ValueType]=[ValueType.real]) -> Problem
 
             Generate a :py:class:`Problem` with ``criteria_count`` criteria and ``categories_count`` categories.
 
@@ -706,64 +787,77 @@
 
                 Actually perform the learning and return the learned model.
 
+        .. class:: PreprocessedLearningSet
+
+            A representation of a learning set with its data normalized as ranks (unsigned integers).
+
+            .. method:: __init__(problem: Problem, learning_set: Alternatives)
+
+                Constructor, pre-processing the learning set into a simpler form for learning.
+
+            .. property:: criteria_count
+                :type: int
+
+                Number of criteria in the :py:class:`Problem`.
+
+            .. property:: categories_count
+                :type: int
+
+                Number of categories in the :py:class:`Problem`.
+
+            .. property:: boundaries_count
+                :type: int
+
+                Number of boundaries in the :py:class:`Problem`, *i.e* ``categories_count - 1``.
+
+            .. property:: alternatives_count
+                :type: int
+
+                Number of alternatives in the ``learning_set``.
+
+            .. property:: single_peaked
+                :type: list[bool]
+
+                Indexed by ``[criterion_index]``. Whether each criterion is single-peaked or not.
+
+            .. property:: values_counts
+                :type: list[int]
+
+                Indexed by ``[criterion_index]``. Number of different values for each criterion, in the ``learning_set`` and min and max values for numerical criteria.
+
+            .. property:: performance_ranks
+                :type: list[list[int]]
+
+                Indexed by ``[criterion_index][alternative_index]``. Rank of each alternative in the ``learning_set`` for each criterion.
+
+            .. property:: assignments
+                :type: list[int]
+
+                Indexed by ``[alternative_index]``. Category index of each alternative in the ``learning_set``.
+
         .. class:: LearnMrsortByWeightsProfilesBreed
 
             The approach described in Olivier Sobrie's PhD thesis to learn MR-Sort models.
 
-            .. method:: __init__(learning_data: LearningData, profiles_initialization_strategy: ProfilesInitializationStrategy, weights_optimization_strategy: WeightsOptimizationStrategy, profiles_improvement_strategy: ProfilesImprovementStrategy, breeding_strategy: BreedingStrategy, termination_strategy: TerminationStrategy, observers: Iterable[Observer]=[])
+            .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_being_learned: ModelsBeingLearned, profiles_initialization_strategy: ProfilesInitializationStrategy, weights_optimization_strategy: WeightsOptimizationStrategy, profiles_improvement_strategy: ProfilesImprovementStrategy, breeding_strategy: BreedingStrategy, termination_strategy: TerminationStrategy, observers: list[Observer]=[])
 
                 Constructor accepting the strategies to use for each step of the learning.
 
-            .. class:: LearningData
+            .. class:: ModelsBeingLearned
 
                 Data shared by all the strategies used in this learning.
 
-                .. method:: __init__(problem: Problem, learning_set: Alternatives, models_count: int, random_seed: int)
+                .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_count: int, random_seed: int)
 
-                    Constructor, pre-processing the learning set into a simpler form for strategies.
-
-                .. property:: criteria_count
-                    :type: int
-
-                    Number of criteria in the :py:class:`Problem`.
-
-                .. property:: categories_count
-                    :type: int
-
-                    Number of categories in the :py:class:`Problem`.
-
-                .. property:: boundaries_count
-                    :type: int
-
-                    Number of boundaries in the :py:class:`Problem`, *i.e* ``categories_count - 1``.
-
-                .. property:: alternatives_count
-                    :type: int
-
-                    Number of alternatives in the ``learning_set``.
-
-                .. property:: values_counts
-                    :type: Iterable[int]
-
-                    Indexed by ``[criterion_index]``. Number of different values for each criterion, in the ``learning_set`` and min and max values for numerical criteria.
-
-                .. property:: performance_ranks
-                    :type: Iterable[Iterable[int]]
-
-                    Indexed by ``[criterion_index][alternative_index]``. Rank of each alternative in the ``learning_set`` for each criterion.
-
-                .. property:: assignments
-                    :type: Iterable[int]
-
-                    Indexed by ``[alternative_index]``. Category index of each alternative in the ``learning_set``.
+                    Constructor, allocating but not initializing data about models about to be learned.
 
                 .. property:: models_count
                     :type: int
 
                     The number of in-progress models for this learning.
 
-                .. property:: urbgs
-                    :type: Iterable[UniformRandomBitsGenerator]
+                .. property:: random_generators
+                    :type: list[UniformRandomBitsGenerator]
 
                     Indexed by ``[model_index]``. Random number generators associated to each in-progress model.
 
@@ -773,22 +867,32 @@
                     The index of the current iteration of the WPB algorithm.
 
                 .. property:: model_indexes
-                    :type: Iterable[int]
+                    :type: list[int]
 
                     Indexed by ``0`` to ``models_count - 1``. Indexes of in-progress models ordered by increasing accuracy.
 
                 .. property:: weights
-                    :type: Iterable[Iterable[int]]
+                    :type: list[list[int]]
 
                     Indexed by ``[model_index][criterion_index]``. The current MR-Sort weight of each criterion for each model.
 
-                .. property:: profile_ranks
-                    :type: Iterable[Iterable[Iterable[int]]]
+                .. property:: low_profile_ranks
+                    :type: list[list[list[int]]]
 
-                    Indexed by ``[model_index][profile_index][criterion_index]``. The current rank of each profile, for each model and criterion.
+                    Indexed by ``[model_index][boundary_index][criterion_index]``. The current rank of each low profile, for each model and criterion.
+
+                .. property:: high_profile_rank_indexes
+                    :type: list[unsigned]
+
+                    Indexed by ``[criterion_index]``. The index in ``high_profile_ranks``, for each single-peaked criterion.
+
+                .. property:: high_profile_ranks
+                    :type: list[list[list[int]]]
+
+                    Indexed by ``[model_index][boundary_index][high_profile_rank_indexes[criterion_index]]``. The current rank of each high profile, for each model and single-peaked criterion.
 
                 .. property:: accuracies
-                    :type: Iterable[int]
+                    :type: list[int]
 
                     Indexed by ``[model_index]``. Accuracy of each in-progress model.
 
@@ -800,13 +904,21 @@
 
                     Return the best model so far.
 
+                .. method:: get_model(model_index: int) -> Model
+
+                    Return the model at the given index.
+
+                .. method:: recompute_accuracy(model_index: int)
+
+                    Recompute the accuracy of the model at the given index.
+
             .. class:: ProfilesInitializationStrategy
 
                 Abstract base class for profiles initialization strategies.
 
                 .. method:: initialize_profiles(model_indexes_begin: int, model_indexes_end: int)
 
-                    Method to override. Should initialize all ``profile_ranks`` of models at indexes in ``[model_indexes[i] for i in range(model_indexes_begin, model_indexes_end)]``.
+                    Method to override. Should initialize all ``low_profile_ranks`` and ``high_profile_ranks`` of models at indexes in ``[model_indexes[i] for i in range(model_indexes_begin, model_indexes_end)]``.
 
             .. class:: WeightsOptimizationStrategy
 
@@ -822,7 +934,7 @@
 
                 .. method:: improve_profiles(model_indexes_begin: int, model_indexes_end: int)
 
-                    Method to override. Should improve ``profile_ranks`` of models at indexes in ``[model_indexes[i] for i in range(model_indexes_begin, model_indexes_end)]``.
+                    Method to override. Should improve ``low_profile_ranks`` and ``high_profile_ranks`` of models at indexes in ``[model_indexes[i] for i in range(model_indexes_begin, model_indexes_end)]``.
 
             .. class:: BreedingStrategy
 
@@ -860,7 +972,7 @@
 
             The profiles initialization strategy described in Olivier Sobrie's PhD thesis.
 
-            .. method:: __init__(learning_data: LearningData)
+            .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_being_learned: ModelsBeingLearned)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -872,7 +984,7 @@
 
             The weights optimization strategy described in Olivier Sobrie's PhD thesis. The linear program is solved using AlgLib.
 
-            .. method:: __init__(learning_data: LearningData)
+            .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_being_learned: ModelsBeingLearned)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -884,7 +996,7 @@
 
             The weights optimization strategy described in Olivier Sobrie's PhD thesis. The linear program is solved using GLOP.
 
-            .. method:: __init__(learning_data: LearningData)
+            .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_being_learned: ModelsBeingLearned)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -896,7 +1008,7 @@
 
             The profiles improvement strategy described in Olivier Sobrie's PhD thesis. Run on the CPU.
 
-            .. method:: __init__(learning_data: LearningData)
+            .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_being_learned: ModelsBeingLearned)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -908,7 +1020,7 @@
 
             The profiles improvement strategy described in Olivier Sobrie's PhD thesis. Run on the CUDA-capable GPU.
 
-            .. method:: __init__(learning_data: LearningData)
+            .. method:: __init__(preprocessed_learning_set: PreprocessedLearningSet, models_being_learned: ModelsBeingLearned)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -920,7 +1032,7 @@
 
             The breeding strategy described in Olivier Sobrie's PhD thesis: re-initializes ``count`` in-progress models.
 
-            .. method:: __init__(learning_data: LearningData, profiles_initialization_strategy: ProfilesInitializationStrategy, count: int)
+            .. method:: __init__(models_being_learned: ModelsBeingLearned, profiles_initialization_strategy: ProfilesInitializationStrategy, weights_optimization_strategy: WeightsOptimizationStrategy, count: int)
 
                 Constructor. Keeps references to the profiles initialization strategy and the learning data.
 
@@ -932,7 +1044,7 @@
 
             Termination strategy. Terminates the learning after a given number of iterations.
 
-            .. method:: __init__(learning_data: LearningData, max_iterations_count: int)
+            .. method:: __init__(models_being_learned: ModelsBeingLearned, max_iterations_count: int)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -944,7 +1056,7 @@
 
             Termination strategy. Terminates the learning after a given number of iterations without progress.
 
-            .. method:: __init__(learning_data: LearningData, max_iterations_count: int)
+            .. method:: __init__(models_being_learned: ModelsBeingLearned, max_iterations_count: int)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -968,7 +1080,7 @@
 
             Termination strategy. Terminates the learning after a given duration without progress.
 
-            .. method:: __init__(learning_data: LearningData, max_seconds: float)
+            .. method:: __init__(models_being_learned: ModelsBeingLearned, max_seconds: float)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -980,7 +1092,7 @@
 
             Termination strategy. Terminates the learning when the best model reaches a given accuracy.
 
-            .. method:: __init__(learning_data: LearningData, target_accuracy: int)
+            .. method:: __init__(models_being_learned: ModelsBeingLearned, target_accuracy: int)
 
                 Constructor. Keeps a reference to the learning data.
 
@@ -992,7 +1104,7 @@
 
             Termination strategy. Terminates the learning when one or more termination strategies decide to terminate.
 
-            .. method:: __init__(termination_strategies: Iterable[TerminationStrategy])
+            .. method:: __init__(termination_strategies: list[TerminationStrategy])
 
                 Constructor. Keeps references to each termination strategies.
 
