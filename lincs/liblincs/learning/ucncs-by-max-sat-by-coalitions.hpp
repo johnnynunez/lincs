@@ -14,10 +14,14 @@ class MaxSatCoalitionsUcncsLearning {
  public:
   template<class... U>
   MaxSatCoalitionsUcncsLearning(const Problem& problem, const Alternatives& learning_set_, U&&... u) :
+    #ifndef NDEBUG
+    input_problem(problem),
+    input_learning_set(learning_set_),
+    #endif
     learning_set(problem, learning_set_),
     coalitions_count(1 << learning_set.criteria_count),
     goal_weight(1),
-    better(),
+    accepted(),
     sufficient(),
     sat(std::forward<U>(u)...)
   {}
@@ -40,14 +44,17 @@ class MaxSatCoalitionsUcncsLearning {
   Model decode(const std::vector<bool>& solution);
 
  private:
-  PreProcessedLearningSet learning_set;
+  #ifndef NDEBUG
+  const Problem& input_problem;
+  const Alternatives& input_learning_set;
+  #endif
+  PreprocessedLearningSet learning_set;
   const unsigned coalitions_count;
   typedef boost::dynamic_bitset<> Coalition;
+  // See more comments in 'ucncs-by-sat-by-coalitions.hpp'
   std::vector<Coalition> all_coalitions;
   const typename MaxSatProblem::weight_type goal_weight;
-  // better[criterion_index][boundary_index][value_rank]: value is better than profile on criterion
-  std::vector<std::vector<std::vector<typename MaxSatProblem::variable_type>>> better;
-  // sufficient[coalition.to_ulong()]: coalition is sufficient
+  std::vector<std::vector<std::vector<typename MaxSatProblem::variable_type>>> accepted;
   std::vector<typename MaxSatProblem::variable_type> sufficient;
   // correct[alternative_index]: alternative is correctly classified
   std::vector<typename MaxSatProblem::variable_type> correct;

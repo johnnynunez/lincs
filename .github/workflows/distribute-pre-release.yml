@@ -1,8 +1,4 @@
-# About caching: this workflow is typically run every two weeks,
-# and GitHub Actions evict caches unsused for 7 days,
-# so for simplicity we don't cache anything.
-
-# WARNING: There is a lot of duplication between distribute{,-pre}-release.yml because I don't know (yet) how
+# WARNING: There is a lot of duplication between .yml workflows because I don't know (yet) how
 # to factorize these workflows. Keep things in sync.
 
 name: Distribute pre-release
@@ -39,7 +35,7 @@ jobs:
       - make-source-dist
     strategy:
       matrix:
-        python_version: ['3.8', '3.9', '3.10', '3.11']
+        python_version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
@@ -52,8 +48,8 @@ jobs:
           sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
           sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-1 cuda-nvcc-12-1
-          echo "/usr/local/cuda-12.1/bin" >>$GITHUB_PATH
+          sudo apt-get install --yes --no-install-recommends cuda-cudart-dev-12-4 cuda-nvcc-12-4
+          echo "/usr/local/cuda-12.4/bin" >>$GITHUB_PATH
       - name: Install Boost
         run: |
             cd /home/runner/work
@@ -61,16 +57,11 @@ jobs:
             tar xf boost_*.tar.gz
             rm boost_*.tar.gz
             cd boost_*
-            echo "using python : ${{ matrix.python_version }} ;" >tools/build/src/user-config.jam
-            ./bootstrap.sh
-            ./b2 --with-python python=${{ matrix.python_version }} link=shared variant=release stage
             sudo cp -r boost /usr/local/include
-            sudo cp -r stage/lib/* /usr/local/lib
-            sudo ldconfig
       - name: Install OR-Tools
         run: |
             cd /home/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_ubuntu-20.04_v8.2.8710.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz
             tar xf or-tools_*.tar.gz
             rm or-tools_*.tar.gz
             cd or-tools_*
@@ -86,7 +77,7 @@ jobs:
             tar xf *.tar.gz
             sudo cp bin/patchelf /usr/local/bin
 
-      - name: Dowload the source distribution from GitHub Actions artifacts
+      - name: Download the source distribution from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           name: source-dist
@@ -112,12 +103,12 @@ jobs:
           path: dist
 
   build-for-windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     needs:
       - make-source-dist
     strategy:
       matrix:
-        python_version: ['3.8', '3.9', '3.10', '3.11']
+        python_version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
@@ -125,18 +116,11 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - name: Install Python packages
         run: pip install build delvewheel twine
-      # @toto(Project management, soon) Consider replacing the Jimver/cuda-toolkit action by these two steps
-      # - name: Download CUDA installer
-      #   run: Invoke-WebRequest -URI https://developer.download.nvidia.com/compute/cuda/12.1.0/network_installers/cuda_12.1.0_windows_network.exe -OutFile cuda_12.1.0_windows_network.exe
-      # - name: Install CUDA
-      #   # Package names from https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#id2
-      #   run: .\cuda_12.1.0_windows_network.exe -s nvcc_12.1 cudart_12.1
-      # Note: tried it, and it failed because 'setup.py' could not find 'nvcc' in the PATH
       - name: Install CUDA
-        uses: Jimver/cuda-toolkit@v0.2.14
+        uses: Jimver/cuda-toolkit@v0.2.19
         id: cuda-toolkit
         with:
-          cuda: '12.1.0'
+          cuda: '12.4.1'
           use-github-cache: false
           use-local-cache: false
           method: network
@@ -161,24 +145,20 @@ jobs:
             rm boost_*.tar.gz
             mv boost_* boost
             cd boost
-            echo "using python : ${{ matrix.python_version }} ;" >tools/build/src/user-config.jam
-            ./bootstrap.bat
-            ./b2 --with-python python=${{ matrix.python_version }} link=shared variant=release stage || true
             mkdir -p /d/lincs-deps/include /d/lincs-deps/lib
             cp -r boost /d/lincs-deps/include
-            cp -r stage/lib/* /d/lincs-deps/lib
       - name: Install OR-Tools
         shell: msys2 {0}
         run: |
             cd /d/a
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_VisualStudio2019-64bit_v8.2.8710.zip
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x64_VisualStudio2022_cpp_v9.11.4210.zip
             unzip or-tools_*.zip
             rm or-tools_*.zip
             cd or-tools_*
             cp -r include/* /d/lincs-deps/include
             cp -r lib/* /d/lincs-deps/lib
 
-      - name: Dowload the source distribution from GitHub Actions artifacts
+      - name: Download the source distribution from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           name: source-dist
@@ -193,7 +173,6 @@ jobs:
         env:
           LINCS_DEV_FORCE_NVCC: "true"
           LINCS_DEV_DEPENDENCIES: d:\lincs-deps
-          LINCS_DEV_VC_VERSION: 142
       - name: Make the wheel machine-independent
         run: delvewheel repair --strip (get-item local-dist\*.whl) --wheel-dir dist --add-path d:\lincs-deps\lib
       - name: Check the wheel
@@ -206,14 +185,14 @@ jobs:
           path: dist
 
   build-for-macos:
-    runs-on: macos-11
+    runs-on: macos-13
     needs:
       - make-source-dist
     strategy:
       matrix:
-        python_version: ['3.8', '3.9', '3.10', '3.11']
+        python_version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     env:
-      MACOSX_DEPLOYMENT_TARGET: 11.0
+      MACOSX_DEPLOYMENT_TARGET: 12.0
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
@@ -226,7 +205,7 @@ jobs:
             cd /Users/runner/work
             mkdir openmp
             cd openmp
-            wget https://mac.r-project.org/openmp/openmp-10.0.0-darwin17-Release.tar.gz
+            wget https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
             tar xf *.tar.gz
             sudo cp usr/local/lib/* /usr/local/lib
             sudo cp usr/local/include/* /usr/local/include
@@ -237,22 +216,23 @@ jobs:
             tar xf boost_*.tar.gz
             rm boost_*.tar.gz
             cd boost_*
-            echo "using python : ${{ matrix.python_version }} ;" >tools/build/src/user-config.jam
-            ./bootstrap.sh
-            ./b2 --with-python python=${{ matrix.python_version }} link=shared variant=release stage
             sudo cp -r boost /usr/local/include
-            sudo cp -r stage/lib/* /usr/local/lib
       - name: Install OR-Tools
         run: |
             cd /Users/runner/work
-            wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_MacOsX-11.2.1_v8.2.8710.tar.gz
-            tar xf or-tools_*.tar.gz
-            rm or-tools_*.tar.gz
-            cd or-tools_*
-            sudo cp -r include/* /usr/local/include
-            sudo cp -r lib/* /usr/local/lib
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_x86_64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_x86_64_*.tar.gz
+            rm or-tools_x86_64_*.tar.gz
+            wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_arm64_macOS-14.6.1_cpp_v9.11.4210.tar.gz
+            tar xf or-tools_arm64_*.tar.gz
+            rm or-tools_arm64_*.tar.gz
+            sudo cp -r or-tools_arm64_*/include/* /usr/local/include
+            lipo or-tools*/lib/libortools.9.11.dylib -output /usr/local/lib/libortools.9.11.dylib -create
+            cd /usr/local/lib
+            ln -s libortools.9.11.dylib libortools.9.dylib
+            ln -s libortools.9.dylib libortools.dylib
 
-      - name: Dowload the source distribution from GitHub Actions artifacts
+      - name: Download the source distribution from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           name: source-dist
@@ -281,16 +261,33 @@ jobs:
       - build-for-windows
       - build-for-macos
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2019
           - windows-2022
-          - macos-11
           - macos-12
           - macos-13
-        python_version: ['3.8', '3.9', '3.10', '3.11']
+          - macos-14
+          - macos-15
+        python_version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Older Python versions don't build 'universal2' wheels, so they can't run on the M1 runner that run macOS 14 and 15
+          - os: macos-14
+            python_version: '3.8'
+          - os: macos-15
+            python_version: '3.8'
+          - os: macos-14
+            python_version: '3.9'
+          - os: macos-15
+            python_version: '3.9'
+          - os: macos-14
+            python_version: '3.10'
+          - os: macos-15
+            python_version: '3.10'
     steps:
       - name: Install Python
         uses: actions/setup-python@v5
@@ -298,7 +295,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       # DO NOT install any other dependencies, to test that the wheels are self-contained
 
-      - name: Dowload the wheels from GitHub Actions artifacts
+      - name: Download the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: wheel-dist-${{ matrix.python_version }}-*
@@ -325,19 +322,21 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Dowload the source distribution from GitHub Actions artifacts
+      - name: Download the source distribution from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           name: source-dist
-      - name: Dowload the wheels from GitHub Actions artifacts
+          path: dist
+      - name: Download the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: wheel-dist-*
           merge-multiple: true
+          path: dist
       - name: Publish all distributions to the Python Package Index
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: .
+          packages-dir: dist
           verify-metadata: false
           verbose: true
 
@@ -351,7 +350,7 @@ jobs:
       - name: Download the wheels from GitHub Actions artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-dist-3.10-linux
+          name: wheel-dist-3.13-linux
           path: docker
       - name: Build the Docker image
         run: docker build --pull --no-cache --build-arg lincs_version=$(echo ${{ github.ref_name }} | sed 's/^v//') --tag jacquev6/lincs:$(echo ${{ github.ref_name }} | sed 's/^v//') docker

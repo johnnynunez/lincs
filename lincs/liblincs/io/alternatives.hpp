@@ -75,7 +75,14 @@ class Performance {
   }
 
  public:
-  Criterion::ValueType get_value_type() const { return Criterion::ValueType(self.index()); }
+  Criterion::ValueType get_value_type() const {
+    return dispatch(
+      self,
+      [](const Real&) { return Criterion::ValueType::real; },
+      [](const Integer&) { return Criterion::ValueType::integer; },
+      [](const Enumerated&) { return Criterion::ValueType::enumerated; }
+    );
+  }
   const Self& get() const { return self; }
 
   bool is_real() const { return get_value_type() == Criterion::ValueType::real; }
@@ -126,6 +133,8 @@ class Alternative {
 class Alternatives {
  public:
   Alternatives(const Problem&, const std::vector<Alternative>&);
+
+  void check_consistency_with(const Problem&) const;
 
   Alternatives(Internal, const std::vector<Alternative>& alternatives_) : alternatives(alternatives_) {}
 

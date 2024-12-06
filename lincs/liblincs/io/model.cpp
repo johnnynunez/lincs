@@ -28,6 +28,32 @@ TEST_CASE("libyaml-cpp uses sufficient precision for floats") {
   CHECK(YAML::Load(ss).as<float>() == 0x1.c78b0cp-2f);  // No approximation: no loss of precision
 }
 
+namespace YAML {
+
+template<typename T>
+Emitter& operator<<(Emitter& out, const std::optional<T>& o) {
+  if (o) {
+    out << *o;
+  } else {
+    out << Null;
+  }
+  return out;
+}
+
+template <typename T>
+struct convert<std::optional<T>> {
+  static bool decode(const Node& node, std::optional<T>& rhs) {
+    if (node.IsNull()) {
+      rhs.reset();
+    } else {
+      rhs = node.as<T>();
+    }
+    return true;
+  }
+};
+
+}
+
 namespace lincs {
 
 const std::string Model::json_schema(R"($schema: https://json-schema.org/draft/2020-12/schema
@@ -57,6 +83,26 @@ properties:
           required:
             - kind
             - thresholds
+          additionalProperties: false
+        - properties:
+            kind:
+              type: string
+              const: intervals
+            intervals:
+              description: For each category but the lowest, the interval of values to be accepted in that category according to that criterion.
+              type: array
+              minItems: 1
+              items:
+                oneOf:
+                  - type: 'null'
+                  - type: array
+                    minItems: 2
+                    maxItems: 2
+                    items:
+                      type: number
+          required:
+            - kind
+            - intervals
           additionalProperties: false
     minItems: 1
   sufficient_coalitions:
@@ -131,6 +177,10 @@ Model::Model(const Problem& problem, const std::vector<AcceptedValues>& accepted
   accepted_values(accepted_values_),
   sufficient_coalitions(sufficient_coalitions_)
 {
+  check_consistency_with(problem);
+}
+
+void Model::check_consistency_with(const Problem& problem) const {
   const unsigned criteria_count = problem.get_criteria().size();
   const unsigned categories_count = problem.get_ordered_categories().size();
   const unsigned boundaries_count = categories_count - 1;
@@ -144,47 +194,156 @@ Model::Model(const Problem& problem, const std::vector<AcceptedValues>& accepted
         validate(thresholds.get_thresholds().size() == boundaries_count, "The number of real thresholds in an accepted values descriptor must be one less than the number of categories in the problem");
         const auto& criterion_values = criterion.get_real_values();
         for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
-          validate(criterion_values.is_acceptable(thresholds.get_thresholds()[boundary_index]), "Each threshold in an accepted values descriptor must be between the min and max values for the corresponding real criterion");
+          const std::optional<float> threshold = thresholds.get_thresholds()[boundary_index];
+          if (threshold) {
+            validate(criterion_values.is_acceptable(*threshold), "Each threshold in an accepted values descriptor must be between the min and max values for the corresponding real criterion");
+          }
         }
         for (unsigned boundary_index = 1; boundary_index != boundaries_count; ++boundary_index) {
-          validate(
-            better_or_equal(
-              criterion_values.get_preference_direction(),
-              thresholds.get_thresholds()[boundary_index],
-              thresholds.get_thresholds()[boundary_index - 1]
-            ),
-            "The real thresholds in an accepted values descriptor must be in preference order"
-          );
+          const std::optional<float> previous_threshold = thresholds.get_thresholds()[boundary_index - 1];
+          const std::optional<float> threshold = thresholds.get_thresholds()[boundary_index];
+          if (previous_threshold) {
+            if (threshold) {
+              switch (criterion_values.get_preference_direction()) {
+                case Criterion::PreferenceDirection::increasing:
+                  validate(*threshold >= *previous_threshold, "The real thresholds in an accepted values descriptor must be in preference order");
+                  break;
+                case Criterion::PreferenceDirection::decreasing:
+                  validate(*threshold <= *previous_threshold, "The real thresholds in an accepted values descriptor must be in preference order");
+                  break;
+                default:
+                  validate(false, "Thresholds accepted values descriptors are only supported for monotonic criteria");
+                  break;
+              }
+            }
+          } else {
+            validate(!threshold, "After a null threshold, all subsequent thresholds must be null");
+          }
         }
       },
       [&criterion, criterion_index, boundaries_count](const AcceptedValues::IntegerThresholds& thresholds) {
         validate(thresholds.get_thresholds().size() == boundaries_count, "The number of integer thresholds in an accepted values descriptor must be one less than the number of categories in the problem");
         const auto& criterion_values = criterion.get_integer_values();
         for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
-          validate(criterion_values.is_acceptable(thresholds.get_thresholds()[boundary_index]), "Each threshold in an accepted values descriptor must be between the min and max values for the corresponding integer criterion");
+          const std::optional<int> threshold = thresholds.get_thresholds()[boundary_index];
+          if (threshold) {
+            validate(criterion_values.is_acceptable(*threshold), "Each threshold in an accepted values descriptor must be between the min and max values for the corresponding integer criterion");
+          }
         }
         for (unsigned boundary_index = 1; boundary_index != boundaries_count; ++boundary_index) {
-          validate(
-            better_or_equal(
-              criterion.get_integer_values().get_preference_direction(),
-              thresholds.get_thresholds()[boundary_index],
-              thresholds.get_thresholds()[boundary_index - 1]
-            ),
-            "The integer thresholds in an accepted values descriptor must be in preference order"
-          );
+          const std::optional<int> previous_threshold = thresholds.get_thresholds()[boundary_index - 1];
+          const std::optional<int> threshold = thresholds.get_thresholds()[boundary_index];
+          if (previous_threshold) {
+            if (threshold) {
+              switch (criterion_values.get_preference_direction()) {
+                case Criterion::PreferenceDirection::increasing:
+                  validate(*threshold >= *previous_threshold, "The integer thresholds in an accepted values descriptor must be in preference order");
+                  break;
+                case Criterion::PreferenceDirection::decreasing:
+                  validate(*threshold <= *previous_threshold, "The integer thresholds in an accepted values descriptor must be in preference order");
+                  break;
+                default:
+                  validate(false, "Thresholds accepted values descriptors are only supported for monotonic criteria");
+                  break;
+              }
+            }
+          } else {
+            validate(!threshold, "After a null threshold, all subsequent thresholds must be null");
+          }
         }
       },
       [&criterion, criterion_index, boundaries_count](const AcceptedValues::EnumeratedThresholds& thresholds) {
         validate(thresholds.get_thresholds().size() == boundaries_count, "The number of enumerated thresholds in an accepted values descriptor must be one less than the number of categories in the problem");
         const auto& criterion_values = criterion.get_enumerated_values();
         for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
-          validate(criterion_values.is_acceptable(thresholds.get_thresholds()[boundary_index]), "Each threshold in an accepted values descriptor must be in the enumerated values for the corresponding criterion");
+          const std::optional<std::string>& threshold = thresholds.get_thresholds()[boundary_index];
+          if (threshold) {
+            validate(criterion_values.is_acceptable(*threshold), "Each threshold in an accepted values descriptor must be in the enumerated values for the corresponding criterion");
+          }
         }
         for (unsigned boundary_index = 1; boundary_index != boundaries_count; ++boundary_index) {
-          validate(
-            criterion_values.get_value_rank(thresholds.get_thresholds()[boundary_index]) >= criterion_values.get_value_rank(thresholds.get_thresholds()[boundary_index - 1]),
-            "The enumerated thresholds in an accepted values descriptor must be in preference order"
-          );
+          const std::optional<std::string>& previous_threshold = thresholds.get_thresholds()[boundary_index - 1];
+          const std::optional<std::string>& threshold = thresholds.get_thresholds()[boundary_index];
+          if (previous_threshold) {
+            if (threshold) {
+              validate(
+                criterion_values.get_value_rank(*threshold) >= criterion_values.get_value_rank(*previous_threshold),
+                "The enumerated thresholds in an accepted values descriptor must be in preference order"
+              );
+            }
+          } else {
+            validate(!threshold, "After a null threshold, all subsequent thresholds must be null");
+          }
+        }
+      },
+      [&criterion, criterion_index, boundaries_count](const AcceptedValues::RealIntervals& intervals) {
+        validate(intervals.get_intervals().size() == boundaries_count, "The number of real intervals in an accepted values descriptor must be one less than the number of categories in the problem");
+        const auto& criterion_values = criterion.get_real_values();
+        for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
+          const auto interval = intervals.get_intervals()[boundary_index];
+          if (interval) {
+            validate(
+              criterion_values.is_acceptable(interval->first) && criterion_values.is_acceptable(interval->second),
+              "Both ends of each interval in an accepted values descriptor must be between the min and max values for the corresponding real criterion");
+          }
+        }
+        validate(criterion_values.get_preference_direction() == Criterion::PreferenceDirection::single_peaked, "Intervals accepted values descriptors are only supported for single-peaked criteria");
+        for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
+          const auto interval = intervals.get_intervals()[boundary_index];
+          if (interval) {
+            validate(
+              interval->first <= interval->second,
+              "The ends of intervals accepted values descriptors for real criteria  must be in order");
+          }
+        }
+        for (unsigned boundary_index = 1; boundary_index != boundaries_count; ++boundary_index) {
+          const auto previous_interval = intervals.get_intervals()[boundary_index - 1];
+          const auto interval = intervals.get_intervals()[boundary_index];
+          if (previous_interval) {
+            if (interval) {
+              validate(
+                previous_interval->first <= interval->first
+                && previous_interval->second >= interval->second,
+                "Intervals accepted values descriptors for real criteria must be nested");
+            }
+          } else {
+            validate(!interval, "After a null interval, all subsequent intervals must be null");
+          }
+        }
+      },
+      [&criterion, criterion_index, boundaries_count](const AcceptedValues::IntegerIntervals& intervals) {
+        validate(intervals.get_intervals().size() == boundaries_count, "The number of integer intervals in an accepted values descriptor must be one less than the number of categories in the problem");
+        const auto& criterion_values = criterion.get_integer_values();
+        for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
+          const auto interval = intervals.get_intervals()[boundary_index];
+          if (interval) {
+            validate(
+              criterion_values.is_acceptable(interval->first) && criterion_values.is_acceptable(interval->second),
+              "Both ends of each interval in an accepted values descriptor must be between the min and max values for the corresponding integer criterion");
+          }
+        }
+        validate(criterion_values.get_preference_direction() == Criterion::PreferenceDirection::single_peaked, "Intervals accepted values descriptors are only supported for single-peaked criteria");
+        for (unsigned boundary_index = 0; boundary_index != boundaries_count; ++boundary_index) {
+          const auto interval = intervals.get_intervals()[boundary_index];
+          if (interval) {
+            validate(
+              interval->first <= interval->second,
+              "The ends of intervals accepted values descriptors for integer criteria  must be in order");
+          }
+        }
+        for (unsigned boundary_index = 1; boundary_index != boundaries_count; ++boundary_index) {
+          const auto previous_interval = intervals.get_intervals()[boundary_index - 1];
+          const auto interval = intervals.get_intervals()[boundary_index];
+          if (previous_interval) {
+            if (interval) {
+              validate(
+                previous_interval->first <= interval->first
+                && previous_interval->second >= interval->second,
+                "Intervals accepted values descriptors for integer criteria must be nested");
+            }
+          } else {
+            validate(!interval, "After a null interval, all subsequent intervals must be null");
+          }
         }
       }
     );
@@ -229,12 +388,16 @@ Model::Model(const Problem& problem, const std::vector<AcceptedValues>& accepted
 void Model::dump(const Problem& problem, std::ostream& os) const {
   CHRONE();
 
+  check_consistency_with(problem);
+
   #ifdef NDEBUG
   YAML::Emitter out(os);
   #else
   std::stringstream ss;
   YAML::Emitter out(ss);
   #endif
+
+  out.SetNullFormat(YAML::EMITTER_MANIP::LowerNull);
 
   bool use_coalitions_alias =
     sufficient_coalitions.size() > 1
@@ -249,14 +412,47 @@ void Model::dump(const Problem& problem, std::ostream& os) const {
   out << YAML::Key << "accepted_values" << YAML::Value << YAML::BeginSeq;
   for (unsigned criterion_index = 0; criterion_index != problem.get_criteria().size(); ++criterion_index) {
     out << YAML::BeginMap;
-    assert(accepted_values[criterion_index].is_thresholds());
-    out << YAML::Key << "kind" << YAML::Value << "thresholds";
-    out << YAML::Key << "thresholds" << YAML::Value << YAML::Flow;
     dispatch(
       accepted_values[criterion_index].get(),
-      [&out](const AcceptedValues::RealThresholds& thresholds) { out << thresholds.get_thresholds(); },
-      [&out](const AcceptedValues::IntegerThresholds& thresholds) { out << thresholds.get_thresholds(); },
-      [&out](const AcceptedValues::EnumeratedThresholds& thresholds) { out << thresholds.get_thresholds(); }
+      [&out](const AcceptedValues::RealThresholds& thresholds) {
+        out << YAML::Key << "kind" << YAML::Value << "thresholds";
+        out << YAML::Key << "thresholds" << YAML::Value << YAML::Flow;
+        out << thresholds.get_thresholds();
+      },
+      [&out](const AcceptedValues::IntegerThresholds& thresholds) {
+        out << YAML::Key << "kind" << YAML::Value << "thresholds";
+        out << YAML::Key << "thresholds" << YAML::Value << YAML::Flow;
+        out << thresholds.get_thresholds();
+      },
+      [&out](const AcceptedValues::EnumeratedThresholds& thresholds) {
+        out << YAML::Key << "kind" << YAML::Value << "thresholds";
+        out << YAML::Key << "thresholds" << YAML::Value << YAML::Flow;
+        out << thresholds.get_thresholds();
+      },
+      [&out](const AcceptedValues::RealIntervals& intervals) {
+        out << YAML::Key << "kind" << YAML::Value << "intervals";
+        out << YAML::Key << "intervals" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+        for (const auto& interval : intervals.get_intervals()) {
+          if (interval) {
+            out << YAML::BeginSeq << interval->first << interval->second << YAML::EndSeq;
+          } else {
+            out << YAML::Null;
+          }
+        }
+        out << YAML::EndSeq;
+      },
+      [&out](const AcceptedValues::IntegerIntervals& intervals) {
+        out << YAML::Key << "kind" << YAML::Value << "intervals";
+        out << YAML::Key << "intervals" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+        for (const auto& interval : intervals.get_intervals()) {
+          if (interval) {
+            out << YAML::BeginSeq << interval->first << interval->second << YAML::EndSeq;
+          } else {
+            out << YAML::Null;
+          }
+        }
+        out << YAML::EndSeq;
+      }
     );
     out << YAML::EndMap;
   }
@@ -333,21 +529,38 @@ Model Model::load(const Problem& problem, std::istream& is) {
   for (unsigned criterion_index = 0; criterion_index != yaml_accepted_values.size(); ++criterion_index) {
     const Criterion& criterion = problem.get_criteria()[criterion_index];
     const YAML::Node& yaml_acc_vals = yaml_accepted_values[criterion_index];
-    assert(yaml_acc_vals["kind"].as<std::string>() == "thresholds");
-    const YAML::Node& thresholds = yaml_acc_vals["thresholds"];
+    if (yaml_acc_vals["kind"].as<std::string>() == "thresholds") {
+      const YAML::Node& thresholds = yaml_acc_vals["thresholds"];
 
-    accepted_values.push_back(dispatch(
-      criterion.get_values(),
-      [&thresholds, boundaries_count](const Criterion::RealValues&) {
-        return AcceptedValues(AcceptedValues::RealThresholds(thresholds.as<std::vector<float>>()));
-      },
-      [&thresholds, boundaries_count](const Criterion::IntegerValues&) {
-        return AcceptedValues(AcceptedValues::IntegerThresholds(thresholds.as<std::vector<int>>()));
-      },
-      [&thresholds, boundaries_count](const Criterion::EnumeratedValues&) {
-        return AcceptedValues(AcceptedValues::EnumeratedThresholds(thresholds.as<std::vector<std::string>>()));
-      }
-    ));
+      accepted_values.push_back(dispatch(
+        criterion.get_values(),
+        [&thresholds, boundaries_count](const Criterion::RealValues&) {
+          return AcceptedValues(AcceptedValues::RealThresholds(thresholds.as<std::vector<std::optional<float>>>()));
+        },
+        [&thresholds, boundaries_count](const Criterion::IntegerValues&) {
+          return AcceptedValues(AcceptedValues::IntegerThresholds(thresholds.as<std::vector<std::optional<int>>>()));
+        },
+        [&thresholds, boundaries_count](const Criterion::EnumeratedValues&) {
+          return AcceptedValues(AcceptedValues::EnumeratedThresholds(thresholds.as<std::vector<std::optional<std::string>>>()));
+        }
+      ));
+    } else {
+      assert(yaml_acc_vals["kind"].as<std::string>() == "intervals");
+
+      const YAML::Node& intervals = yaml_acc_vals["intervals"];
+      accepted_values.push_back(dispatch(
+        criterion.get_values(),
+        [&intervals, boundaries_count](const Criterion::RealValues&) {
+          return AcceptedValues(AcceptedValues::RealIntervals(intervals.as<std::vector<std::optional<std::pair<float, float>>>>()));
+        },
+        [&intervals, boundaries_count](const Criterion::IntegerValues&) {
+          return AcceptedValues(AcceptedValues::IntegerIntervals(intervals.as<std::vector<std::optional<std::pair<int, int>>>>()));
+        },
+        [](const Criterion::EnumeratedValues&) -> AcceptedValues {
+          unreachable();
+        }
+      ));
+    }
   }
 
   const YAML::Node& yaml_sufficient_coalitions = node["sufficient_coalitions"];
@@ -505,6 +718,51 @@ sufficient_coalitions:
   CHECK(Model::load(problem, ss) == model);
 }
 
+TEST_CASE("dumping then loading model preserves data - null thresholds") {
+  Problem problem{
+    {
+      Criterion("Real", Criterion::RealValues(Criterion::PreferenceDirection::increasing, -1, 1)),
+      Criterion("Integer", Criterion::IntegerValues(Criterion::PreferenceDirection::increasing, 0, 100)),
+    },
+    {{"Cat 1"}, {"Cat 2"}, {"Cat 3"}, {"Cat 4"}, {"Cat 5"}},
+  };
+
+  Model model{
+    problem,
+    {
+      AcceptedValues(AcceptedValues::RealThresholds({-0.5, 0, std::nullopt, std::nullopt})),
+      AcceptedValues(AcceptedValues::IntegerThresholds({20, 40, 60, std::nullopt})),
+    },
+    {
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+    },
+  };
+
+  std::stringstream ss;
+  model.dump(problem, ss);
+
+  CHECK(ss.str() == R"(kind: ncs-classification-model
+format_version: 1
+accepted_values:
+  - kind: thresholds
+    thresholds: [-0.5, 0, null, null]
+  - kind: thresholds
+    thresholds: [20, 40, 60, null]
+sufficient_coalitions:
+  - &coalitions
+    kind: weights
+    criterion_weights: [0.5, 0.5]
+  - *coalitions
+  - *coalitions
+  - *coalitions
+)");
+
+  CHECK(Model::load(problem, ss) == model);
+}
+
 TEST_CASE("dumping then loading model preserves data - enumerated criterion") {
   Problem problem{
     {Criterion("Criterion 1", Criterion::EnumeratedValues({"F", "E", "D", "C", "B", "A"}))},
@@ -536,6 +794,49 @@ sufficient_coalitions:
 )");
 
   CHECK(Model::load(problem, ss) == model);
+}
+
+TEST_CASE("dumping then loading model preserves data - single-peaked criteria") {
+  Problem problem{
+    {
+      Criterion("Real", Criterion::RealValues(Criterion::PreferenceDirection::single_peaked, -10, 10)),
+      Criterion("Integer", Criterion::IntegerValues(Criterion::PreferenceDirection::single_peaked, 0, 100)),
+    },
+    {{"Cat 1"}, {"Cat 2"}, {"Cat 3"}, {"Cat 4"}},
+  };
+
+  Model model{
+    problem,
+    {
+      AcceptedValues(AcceptedValues::RealIntervals({std::make_pair(-8.5, 8.5), std::make_pair(-3.5, 5.5), std::nullopt})),
+      AcceptedValues(AcceptedValues::IntegerIntervals({std::make_pair(20, 80), std::make_pair(40, 60), std::nullopt})),
+    },
+    {
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+      SufficientCoalitions(SufficientCoalitions::Weights({0.5, 0.5})),
+    },
+  };
+
+  std::stringstream ss;
+  model.dump(problem, ss);
+
+  CHECK(ss.str() == R"(kind: ncs-classification-model
+format_version: 1
+accepted_values:
+  - kind: intervals
+    intervals: [[-8.5, 8.5], [-3.5, 5.5], null]
+  - kind: intervals
+    intervals: [[20, 80], [40, 60], null]
+sufficient_coalitions:
+  - &coalitions
+    kind: weights
+    criterion_weights: [0.5, 0.5]
+  - *coalitions
+  - *coalitions
+)");
+
+  // CHECK(Model::load(problem, ss) == model);
 }
 
 TEST_CASE("dumping empty roots uses flow style") {

@@ -22,7 +22,7 @@ class Criterion {
     isotone=increasing,
     decreasing,
     antitone=decreasing,
-    // @todo(Feature, v1.2) Add single-peaked
+    single_peaked,
     // @todo(Feature, later) Add unknown
   };
 
@@ -43,6 +43,8 @@ class Criterion {
     bool is_increasing() const { return preference_direction == PreferenceDirection::increasing; }
 
     bool is_decreasing() const { return preference_direction == PreferenceDirection::decreasing; }
+
+    bool is_single_peaked() const { return preference_direction == PreferenceDirection::single_peaked; }
 
     float get_min_value() const { return min_value; }
 
@@ -74,6 +76,8 @@ class Criterion {
 
     bool is_decreasing() const { return preference_direction == PreferenceDirection::decreasing; }
 
+    bool is_single_peaked() const { return preference_direction == PreferenceDirection::single_peaked; }
+
     int get_min_value() const { return min_value; }
 
     int get_max_value() const { return max_value; }
@@ -87,8 +91,6 @@ class Criterion {
   };
 
   class EnumeratedValues {
-    // @todo(Feature, v1.2) Support single-peaked enumerated criteria
-
    public:
     EnumeratedValues(const std::vector<std::string>& ordered_values_) : ordered_values(ordered_values_), value_ranks() {
       validate(ordered_values.size() >= 2, "An enumerated criterion must have at least 2 values");
@@ -116,8 +118,6 @@ class Criterion {
     std::map<std::string, unsigned> value_ranks;
   };
 
-  // WARNING: keep the enum and the variant consistent
-  // (because the variant's index is used as the enum's value)
   enum class ValueType { real, integer, enumerated };
   typedef std::variant<RealValues, IntegerValues, EnumeratedValues> Values;
 
@@ -132,7 +132,14 @@ class Criterion {
  public:
   const std::string& get_name() const { return name; }
 
-  ValueType get_value_type() const { return ValueType(values.index()); }
+  ValueType get_value_type() const {
+    return dispatch(
+      values,
+      [](const RealValues&) { return ValueType::real; },
+      [](const IntegerValues&) { return ValueType::integer; },
+      [](const EnumeratedValues&) { return ValueType::enumerated; }
+    );
+  }
   const Values& get_values() const { return values; }
 
   bool is_real() const { return get_value_type() == ValueType::real; }

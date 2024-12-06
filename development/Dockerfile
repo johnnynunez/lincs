@@ -45,9 +45,8 @@ RUN set -x \
 
 FROM downloader AS download-or-tools
 
-# DO NOT UPGRADE to version 9.y: there is a SegFault bug (that I still need to report)
 RUN set -x \
- && wget https://github.com/google/or-tools/releases/download/v8.2/or-tools_ubuntu-20.04_v8.2.8710.tar.gz \
+ && wget https://github.com/google/or-tools/releases/download/v9.11/or-tools_amd64_ubuntu-20.04_cpp_v9.11.4210.tar.gz \
  && tar xf or-tools_*.tar.gz \
  && rm or-tools_*.tar.gz \
  && mv or-tools_* or-tools
@@ -88,7 +87,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       sudo
 
 # Python versions
-ENV LINCS_DEV_PYTHON_VERSIONS="3.8 3.9 3.10 3.11"
+ENV LINCS_DEV_PYTHON_VERSIONS="3.8 3.9 3.10 3.11 3.12 3.13"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     --mount=type=bind,from=download-get-pip,source=/download,target=/download \
@@ -101,18 +100,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
  && add-apt-repository ppa:deadsnakes/ppa \
  && apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
-      $(for python_version in $non_default_python_versions; do echo "python$python_version-dev python$python_version-distutils python$python_version-venv"; done) \
+      $(for python_version in $non_default_python_versions; do echo python$python_version-dev; echo python$python_version-distutils; echo python$python_version-venv; done | grep -v python3.13-distutils) \
  && for python_version in $non_default_python_versions $default_python_version; do python$python_version /download/get-pip.py || exit 1; done
 
 # Boost
 RUN --mount=type=bind,from=download-boost,source=/download,target=/download,readwrite \
     set -x \
- && cd /download/boost \
- && (for version in $LINCS_DEV_PYTHON_VERSIONS; do echo "using python : $version ;"; done) >tools/build/src/user-config.jam \
- && ./bootstrap.sh --with-libraries=python \
- && ./b2 $(for version in $LINCS_DEV_PYTHON_VERSIONS; do echo "python=$version"; done) \
- && cp -r /download/boost/boost /usr/local/include \
- && cp -r /download/boost/stage/lib/* /usr/local/lib
+ && cp -r /download/boost/boost /usr/local/include
 
 # NVidia packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -122,14 +116,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
  && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" \
  && apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
-      cuda-cudart-dev-12-1 \
-      cuda-nvcc-12-1
+      cuda-cudart-dev-12-4 \
+      cuda-nvcc-12-4
 
 # OR-Tools
 RUN --mount=type=bind,from=download-or-tools,source=/download,target=/download \
     set -x \
  && cp -r /download/or-tools/include/* /usr/local/include \
- && cp -r /download/or-tools/lib/*.so /usr/local/lib
+ && cp -r /download/or-tools/lib/libortools.so* /usr/local/lib
 
 # Python packages: development and publication tools
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
@@ -158,15 +152,24 @@ RUN --mount=type=bind,from=download-patchelf,source=/download,target=/download \
     set -x \
  && cp /download/patchelf/bin/patchelf /usr/local/bin
 
-# Python packages: runtime dependencies
+# Python packages: install and runtime dependencies
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     for python_version in $LINCS_DEV_PYTHON_VERSIONS; do python$python_version -m pip install \
       click~=8.1 \
-      matplotlib~=3.5 \
+      matplotlib~=3.7 \
+      setuptools~=75.1 \
+      six~=1.16 \
     || exit 1; done
 
 # Finalization
 RUN ldconfig
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -x \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+      gdb
 
 # User
 ARG UID
@@ -174,12 +177,13 @@ RUN useradd user --uid $UID --create-home
 RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/user
 USER user
 RUN mkdir -p /home/user/.local/bin
-ENV PATH=/home/user/.local/bin:$PATH:/usr/local/cuda-12.1/bin
+ENV PATH=/home/user/.local/bin:$PATH:/usr/local/cuda-12.4/bin
 
 # Make sure /home/user/.local/lib/python3.8/site-packages is in sys.path
 # (useful for development/cycle.py, where 'pip install --user lincs' is run just before 'import lincs')
-RUN pip3 install --user six
+RUN pip3 install --user noop
 
 # CCache
 RUN ln -s $(which ccache) /home/user/.local/bin/x86_64-linux-gnu-gcc
+RUN ln -s $(which ccache) /home/user/.local/bin/x86_64-linux-gnu-g++
 RUN ln -s $(which ccache) /home/user/.local/bin/nvcc

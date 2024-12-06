@@ -11,10 +11,14 @@
 
 namespace lincs {
 
-// @todo(Project management, v1.2) Consider taking 'alternatives_' by rvalue reference and moving it in 'alternatives'
+// @todo(Project management, later) Consider taking 'alternatives_' by rvalue reference and moving it in 'alternatives'
 Alternatives::Alternatives(const Problem& problem, const std::vector<Alternative>& alternatives_) :
   alternatives(alternatives_)
 {
+  check_consistency_with(problem);
+}
+
+void Alternatives::check_consistency_with(const Problem& problem) const {
   const unsigned criteria_count = problem.get_criteria().size();
   for (const auto& alternative : alternatives) {
     validate(
@@ -44,6 +48,8 @@ Alternatives::Alternatives(const Problem& problem, const std::vector<Alternative
 
 void Alternatives::dump(const Problem& problem, std::ostream& os) const {
   CHRONE();
+
+  check_consistency_with(problem);
 
   const unsigned criteria_count = problem.get_criteria().size();
   const unsigned alternatives_count = alternatives.size();

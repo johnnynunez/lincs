@@ -36,8 +36,16 @@ import yaml
     help="Run tests under a single Python version to save time. Please run the full development cycle at least once before submitting your changes.",
 )
 @click.option(
+    "--python-versions", default=os.environ["LINCS_DEV_PYTHON_VERSIONS"],
+    help="Run tests under the specified Python versions. Space-separated list.",
+)
+@click.option(
     "--unit-coverage", is_flag=True,
     help="Measure coverage of unit tests, stop right after that. Implies --single-python-version. Quite long.",
+)
+@click.option(
+    "--skip-build", is_flag=True,
+    help="Skip build to save time.",
 )
 @click.option(
     "--skip-unit", is_flag=True,
@@ -46,6 +54,26 @@ import yaml
 @click.option(
     "--skip-long-unit", is_flag=True,
     help="Skip long unit tests to save time.",
+)
+@click.option(
+    "--skip-wpb-unit", is_flag=True,
+    help="Skip WPB learnings unit tests to save time.",
+)
+@click.option(
+    "--skip-wpb-glop-unit", is_flag=True,
+    help="Skip WPB learnings using GLOP unit tests to save time.",
+)
+@click.option(
+    "--skip-wpb-alglib-unit", is_flag=True,
+    help="Skip WPB learnings using Alglib unit tests to save time.",
+)
+@click.option(
+    "--skip-sat-unit", is_flag=True,
+    help="Skip SAT-based learnings unit tests to save time.",
+)
+@click.option(
+    "--skip-max-sat-unit", is_flag=True,
+    help="Skip Max-SAT-based learnings unit tests to save time.",
 )
 @click.option(
     "--skip-cpp-unit", is_flag=True,
@@ -76,6 +104,10 @@ import yaml
     """),
 )
 @click.option(
+    "--forbid-nvcc", is_flag=True,
+    help="Build lincs without NVCC.",
+)
+@click.option(
     "--forbid-chrones", is_flag=True,
     help="Build lincs without Chrones.",
 )
@@ -86,23 +118,33 @@ import yaml
 def main(
     with_docs,
     single_python_version,
+    python_versions,
     unit_coverage,
+    skip_build,
     skip_unit,
     skip_long_unit,
+    skip_wpb_unit,
+    skip_wpb_glop_unit,
+    skip_wpb_alglib_unit,
+    skip_sat_unit,
+    skip_max_sat_unit,
     skip_cpp_unit,
     skip_python_unit,
     skip_install,
     skip_notebooks,
     skip_unchanged_notebooks,
     forbid_gpu,
+    forbid_nvcc,
     forbid_chrones,
     doctest_option,
 ):
-    if forbid_gpu:
-        os.environ["LINCS_DEV_FORBID_GPU"] = "true"
+    if forbid_nvcc:
         os.environ["LINCS_DEV_FORBID_NVCC"] = "true"
+        forbid_gpu = True
     else:
         os.environ["LINCS_DEV_FORCE_NVCC"] = "true"
+    if forbid_gpu:
+        os.environ["LINCS_DEV_FORBID_GPU"] = "true"
     if forbid_chrones:
         os.environ["LINCS_DEV_FORBID_CHRONES"] = "true"
     else:
@@ -110,12 +152,10 @@ def main(
     if unit_coverage:
         single_python_version = True
 
-    python_versions = os.environ["LINCS_DEV_PYTHON_VERSIONS"].split(" ")
+    python_versions = python_versions.split(" ")
     if single_python_version:
         python_versions = [python_versions[0]]  # Use the lowest version to ensure backward compatibility
-        os.environ["LINCS_DEV_PYTHON_VERSIONS"] = python_versions[0]
-
-    shutil.rmtree("build", ignore_errors=True)
+    os.environ["LINCS_DEV_PYTHON_VERSIONS"] = " ".join(python_versions)
 
     # With lincs not installed
     ##########################
@@ -124,23 +164,34 @@ def main(
         if unit_coverage:
             os.environ["LINCS_DEV_COVERAGE"] = "true"
 
-        for file_name in glob.glob("liblincs.cpython-*-x86_64-linux-gnu.so"):
-            os.unlink(file_name)
-        for python_version in python_versions:
-            print_title(f"Building extension module in debug mode for Python {python_version}")
-            subprocess.run(
-                [
-                    f"python{python_version}", "setup.py", "build_ext",
-                    "--inplace", "--debug", "--undef", "NDEBUG,DOCTEST_CONFIG_DISABLE",
-                    "--parallel", str(multiprocessing.cpu_count() - 1),
-                ],
-                check=True,
-            )
-            print()
+        if not skip_build:
+            shutil.rmtree("build", ignore_errors=True)
+            for file_name in glob.glob("liblincs.cpython-*-x86_64-linux-gnu.so"):
+                os.unlink(file_name)
+            for python_version in python_versions:
+                print_title(f"Building extension module in debug mode for Python {python_version}")
+                subprocess.run(
+                    [
+                        f"python{python_version}", "setup.py", "build_ext",
+                        "--inplace", "--debug", "--undef", "NDEBUG,DOCTEST_CONFIG_DISABLE",
+                        "--parallel", str(multiprocessing.cpu_count() - 1),
+                    ],
+                    check=True,
+                )
+                print()
 
         if not skip_cpp_unit:
             print_title("Running C++ unit tests")
-            run_cpp_tests(python_version=python_versions[0], skip_long=skip_long_unit, doctest_options=doctest_option)
+            run_cpp_tests(
+                python_version=python_versions[0],
+                skip_long=skip_long_unit,
+                skip_wpb=skip_wpb_unit,
+                skip_wpb_glop=skip_wpb_glop_unit,
+                skip_wpb_alglib=skip_wpb_alglib_unit,
+                skip_sat=skip_sat_unit,
+                skip_max_sat=skip_max_sat_unit,
+                doctest_options=doctest_option,
+            )
             print()
 
         if not skip_python_unit:
@@ -209,7 +260,7 @@ def print_title(title, under="="):
     print(flush=True)
 
 
-def run_cpp_tests(*, python_version, skip_long, doctest_options):
+def run_cpp_tests(*, python_version, skip_long, skip_wpb, skip_wpb_glop, skip_wpb_alglib, skip_sat, skip_max_sat, doctest_options):
     suffix = "m" if int(python_version.split(".")[1]) < 8 else ""
     subprocess.run(
         [
@@ -221,13 +272,28 @@ def run_cpp_tests(*, python_version, skip_long, doctest_options):
     )
     env = dict(os.environ)
     env["LD_LIBRARY_PATH"] = "."
-    command = ["/tmp/lincs-tests"]
+    command = [
+        # "gdb", "--eval-command=run " + ' '.join(doctest_options), "--eval-command=quit",
+        "/tmp/lincs-tests",
+    ]
+    if skip_wpb:
+        env["LINCS_DEV_SKIP_WPB"] = "true"
+    if skip_wpb_glop:
+        env["LINCS_DEV_SKIP_WPB_GLOP"] = "true"
+    if skip_wpb_alglib:
+        env["LINCS_DEV_SKIP_WPB_ALGLIB"] = "true"
+    if skip_sat:
+        env["LINCS_DEV_SKIP_SAT"] = "true"
+    if skip_max_sat:
+        env["LINCS_DEV_SKIP_MAX_SAT"] = "true"
     if skip_long:
         env["LINCS_DEV_SKIP_LONG"] = "true"
     else:
         command += ["-d"]
     command += list(doctest_options)
+    before = time.monotonic()
     subprocess.run(command, check=True, env=env)
+    print(f"[doctest] Duration: {time.monotonic() - before:.1f}s")
 
 
 def run_python_tests(*, python_version):
@@ -479,30 +545,21 @@ def make_python_reference():
 
     signature_parser = lark.Lark(
         r"""
-        signature: CNAME "(" parameters ")" "->" type ":"
+        signature: CNAME "(" parameters ")" "->" TNAME
 
-        parameters: mandatory_parameters optional_parameters | optional_parameters_only
+        parameters: [parameter ("," parameter)*]
 
-        mandatory_parameters: [parameter ("," parameter)*]
-
-        optional_parameters: ["[" "," optional_parameter optional_parameters "]"]
-
-        optional_parameters_only: "[" optional_parameter optional_parameters "]"
-
-        optional_parameter: parameter "=" default_value
-
-        parameter: "(" type ")" CNAME
+        parameter: CNAME ":" TNAME ["=" default_value]
 
         default_value: "None" -> none
                     | "True" -> true
                     | "False" -> false
                     | SIGNED_NUMBER -> number
                     | "[]" -> empty_list
+                    | "<" CNAME "." CNAME ":" SIGNED_NUMBER ">" -> enum
+                    | "[" default_value "]" -> list
 
-        type: CNAME -> type_name
-            | iterable_type
-        iterable_type: "Iterable" "[" type "]"
-
+        TNAME: /[a-zA-Z0-9.\[\],]+[a-zA-Z0-9.\[\]]/
         %import common.CNAME
         %import common.SIGNED_NUMBER
 
@@ -517,34 +574,7 @@ def make_python_reference():
             return (args[1], args[2])
 
         def parameters(self, args):
-            if len(args) == 1 or args[1] is None:
-                return args[0]
-            else:
-                return args[0] + args[1]
-
-        def mandatory_parameters(self, args):
-            if args[0] is None:
-                return []
-            else:
-                return args
-
-        def optional_parameters(self, args):
-            if args[0] is None:
-                return []
-            elif args[1] is None:
-                return [args[0]]
-            else:
-                return [args[0]] + args[1]
-
-        def optional_parameters_only(self, args):
-            if args[1] is None:
-                return [args[0]]
-            else:
-                return [args[0]] + args[1]
-
-        def optional_parameter(self, args):
-            (name, type) = args[0]
-            return [name, type, args[1]]
+            return args
 
         def none(self, _):
             return "None"
@@ -561,66 +591,54 @@ def make_python_reference():
         def empty_list(self, _):
             return "[]"
 
+        def enum(self, args):
+            return f"{args[0]}.{args[1]}"
+
+        def list(self, args):
+            return f"[{', '.join(args)}]"
+
         def parameter(self, args):
-            return [args[1].value, args[0]]
-
-        def type(self, args):
-            return args[0]
-        
-        def type_name(self, args):
-            return args[0].value
-
-        def iterable_type(self, args):
-            return f"Iterable[{args[0]}]"
+            return (args[0].value, args[1].value, args[2])
 
     def fix_signature(path, signature):
-        # @todo(Project management, later) Do this in the grammar. I don't yet know how
-        signature = re.sub(r"<liblincs.Iterable\[.*?\] object at 0x............>", "[]", signature)
+        signature = signature.replace("[float, float]", "[float,float]")
+        signature = signature.replace("[int, int]", "[int,int]")
 
-        parameters, return_type = SignatureTransformer().transform(signature_parser.parse(signature))
+        parsed = signature_parser.parse(signature)
+        parameters, return_type = SignatureTransformer().transform(parsed)
 
         if parameters[0][0] == "self":
-            if path[-1] == "__init__":
-                assert parameters[0][1] == "object"
-            else:
-                assert parameters[0][1] == path[-2]
+            assert parameters[0][1].split(".")[-1] == path[-2], (parameters[0][1], path[-2])
             parameters = parameters[1:]
 
         for parameter in parameters:
-            assert parameter[0] != "arg1", f"Set parameter names in {path}"
-
-            if path == ["lincs", "classification", "SufficientCoalitions", "Roots", "__init__"]:
-                if parameter[0] == "upset_roots":
-                    assert len(parameter) == 2
-                    parameter[1] = "Iterable[Iterable[int]]"
-            if path == ["lincs", "classification", "Alternative", "__init__"]:
-                if parameter[0] == "category_index":
-                    assert parameter[2] == "None"
-                    parameter[1] = "Optional[float]"
-            if path == ["lincs", "classification", "generate_mrsort_model"]:
-                if parameter[0] == "fixed_weights_sum":
-                    assert parameter[2] == "None"
-                    parameter[1] = "Optional[float]"
-            if path == ["lincs", "classification", "generate_alternatives"]:
-                if parameter[0] == "max_imbalance":
-                    assert parameter[2] == "None"
-                    parameter[1] = "Optional[float]"
+            assert not parameter[0].startswith("arg"), f"Set parameter names in {path}"
 
         text_parameters = []
         for parameter in parameters:
-            if len(parameter) == 2:
-                (name, type) = parameter
+            (name, type, default) = parameter
+
+            type = type.replace("liblincs.", "")
+            type = type.replace("Criterion.", "")
+            type = type.replace("LearnMrsortByWeightsProfilesBreed.", "")
+            type = type.replace("AcceptedValues.", "")
+            type = type.replace("SufficientCoalitions.", "")
+            type = type.replace("Performance.", "")
+            type = type.replace("[float,float]", "[float, float]")
+            type = type.replace("[int,int]", "[int, int]")
+
+            if default is None:
                 text_parameters.append(f"{name}: {type}")
             else:
-                (name, type, default) = parameter
-                text_parameters .append(f"{name}: {type}={default}")
+                text_parameters.append(f"{name}: {type}={default}")
 
         if return_type == "None":
-            text_return_type = ""
+            return_type = ""
         else:
-            text_return_type = f" -> {return_type}"
+            return_type = return_type.replace("liblincs.", "")
+            return_type = f" -> {return_type}"
 
-        return f"{path[-1]}({', '.join(text_parameters)}){text_return_type}"
+        return f"{path[-1]}({', '.join(text_parameters)}){return_type}"
 
     def walk(path, parent, node, description):
         assert isinstance(description, dict)
@@ -642,44 +660,39 @@ def make_python_reference():
         do_walk = True
         if class_name == "module":
             yield from directive("module", ".".join(path), docstring)
-        elif class_name == "class":
+        elif class_name == "pybind11_type":
             yield from directive("class", name, docstring)
         elif class_name == "type" and name.endswith("Exception"):
             yield from directive("exception", name, description_doc)
-        elif class_name == "type":
-            yield from directive("class", name, docstring)
         elif class_name == path[-2]:
             yield from directive("property", name, description_doc, classmethod=True, type=".".join(path[:-1]))
             do_walk = False
         elif class_name == "property":
             yield from directive("property", name, docstring, type=description.get("type", "@to" + f"do(Documentation, v1.1) Add type to {'.'.join(path)} in doc-sources/reference/lincs.yml"))
             do_walk = False
-        elif class_name == "builtin_function_or_method":
-            docs = docstring.split("\n\n")
-            for i, doc in enumerate(docs):
-                if len(docs) == 2 and i == 1 and "arg1" in doc and doc.endswith(") -> None"):
-                    continue
-                doc = doc.splitlines()
-                signature = doc[0]
-                if "(Internal)internal" in signature:
-                    continue
-                doc = "\n".join(d.strip() for d in doc[1:])
+        elif class_name in ["instancemethod" , "builtin_function_or_method"]:
+            parent_class_name = parent.__class__.__name__
+            if parent_class_name == "pybind11_type":
+                directive_name = "method"
+            elif parent_class_name == "module":
+                directive_name = "function"
+            else:
+                directive_name = "@to" + f"do(Documentation, v1.1) Handle parent {'.'.join(path[:-1])} (of type {parent_class_name}) in the ad-hoc generator"
+            if docstring.splitlines()[1] == "Overloaded function.":
+                docstring = docstring.splitlines()[3:]
+                for i, (signature, doc) in enumerate(zip(docstring[0::4], docstring[2::4])):
+                    yield from directive(directive_name, fix_signature(path, signature.split(". ", 1)[1]), doc, noindex=i > 0)
+            else:
+                signature, doc = docstring.split("\n\n", 1)
                 if not doc:
                     doc = ".. @to" + f"do(Documentation, v1.1) Add a docstring to {'.'.join(path)}."
                 if not doc.endswith("."):
                     doc += ". @to" + f"do(Documentation, v1.1) Add a dot at the end of the docstring of {'.'.join(path)}."
-                parent_class_name = parent.__class__.__name__
-                if parent_class_name == "class":
-                    directive_name = "method"
-                elif parent_class_name == "module":
-                    directive_name = "function"
-                else:
-                    directive_name = "@to" + f"do(Documentation, v1.1) Handle {'.'.join(path[:-1])} (of type {parent_class_name}) in the ad-hoc generator"
-                yield from directive(directive_name, fix_signature(path, signature), doc, noindex=i != 0, staticmethod=description.get("staticmethod", False))
+                yield from directive(directive_name, fix_signature(path, signature), doc, staticmethod=description.get("staticmethod", False))
             do_walk = False
         elif class_name == "function":
             signature = inspect.signature(node)
-            yield from directive("function", f"{name}{signature}".replace("liblincs", "lincs.classification"), docstring)
+            yield from directive("function", f"{name}{signature}".replace("liblincs.", "lincs.classification."), docstring)
         elif class_name in ["bool", "str"]:
             yield from directive("data", name, description_doc, type=class_name)
             do_walk = False
@@ -691,11 +704,14 @@ def make_python_reference():
             undocumented_children_names = set(dir(node))
             for child_description in description.get("children", []):
                 child_name = child_description["name"]
-                undocumented_children_names.remove(child_name)
-                child = getattr(node, child_name)
-                if child_description.get("show", True):
-                    for line in walk(path + [child_name], node, child, child_description):
-                        yield f"    {line}"
+                if child_name in undocumented_children_names:
+                    undocumented_children_names.remove(child_name)
+                    child = getattr(node, child_name)
+                    if child_description.get("show", True):
+                        for line in walk(path + [child_name], node, child, child_description):
+                            yield f"    {line}"
+                else:
+                    yield ".. @to" + f"do(Documentation, v1.1) Remove {'.'.join(path + [child_name])} from doc-sources/reference/lincs.yml"
             for child_name in sorted(undocumented_children_names):
                 if child_name.startswith("_") and child_name not in ["__init__", "__call__"]:
                     continue

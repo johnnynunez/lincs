@@ -8,7 +8,7 @@ Get started
 Get *lincs*
 ===========
 
-We provide binary wheels for *lincs* on Linux, Windows and macOS for x86_64 processors,
+We provide binary wheels for *lincs* on Linux (x86_64), Windows (x86_64) and macOS (x86_64 and M1, M2...),
 so running ``pip install lincs --only-binary lincs`` should be enough on those systems.
 
 We generally recommend you use ``pip`` in a virtual environment (``python -m venv``) or directly ``pipx`` to install any package, including *lincs*.
@@ -121,9 +121,9 @@ And finally generate a set of classified alternatives:
 
 The file format is documented in our :ref:`reference documentation <ref-file-alternatives>`.
 
-@todo(Feature, later) Should we provide utilities to split a set of alternatives into a training set and a testing set?
-Currently we suggest generating two sets from a synthetic model, but for real-world data it could be useful to split a single set.
-Then we'll need to think about the how the ``--max-imbalance`` option interacts with that feature.
+.. @todo(Feature, later) Should we provide utilities to split a set of alternatives into a training set and a testing set?
+   Currently we suggest generating two sets from a synthetic model, but for real-world data it could be useful to split a single set.
+   Then we'll need to think about the how the ``--max-imbalance`` option interacts with that feature.
 
 It should start with something like this, and contain 1000 alternatives:
 

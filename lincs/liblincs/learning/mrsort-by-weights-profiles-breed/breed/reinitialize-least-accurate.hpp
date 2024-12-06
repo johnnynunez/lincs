@@ -11,12 +11,15 @@ namespace lincs {
 class ReinitializeLeastAccurate : public LearnMrsortByWeightsProfilesBreed::BreedingStrategy {
  public:
   explicit ReinitializeLeastAccurate(
-    LearningData& learning_data_,
+    ModelsBeingLearned& models_being_learned_,
     LearnMrsortByWeightsProfilesBreed::ProfilesInitializationStrategy& profiles_initialization_strategy_,
+    LearnMrsortByWeightsProfilesBreed::WeightsOptimizationStrategy& weights_optimization_strategy_,
     unsigned count_
   ) :
-    learning_data(learning_data_),
+    LearnMrsortByWeightsProfilesBreed::BreedingStrategy(true),
+    models_being_learned(models_being_learned_),
     profiles_initialization_strategy(profiles_initialization_strategy_),
+    weights_optimization_strategy(weights_optimization_strategy_),
     count(count_)
   {}
 
@@ -24,8 +27,9 @@ class ReinitializeLeastAccurate : public LearnMrsortByWeightsProfilesBreed::Bree
   void breed() override;
 
  private:
-  LearningData& learning_data;
+  ModelsBeingLearned& models_being_learned;
   LearnMrsortByWeightsProfilesBreed::ProfilesInitializationStrategy& profiles_initialization_strategy;
+  LearnMrsortByWeightsProfilesBreed::WeightsOptimizationStrategy& weights_optimization_strategy;
   unsigned count;
 };
 

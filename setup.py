@@ -1,7 +1,6 @@
 # Copyright 2023-2024 Vincent Jacques
 
 import glob
-import itertools
 import os
 import setuptools
 import setuptools.command.build_ext
@@ -31,7 +30,7 @@ with open("requirements.txt") as f:
     install_requires = f.readlines()
 
 
-windows_cuda_path = os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2")
+windows_cuda_path = os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4")
 
 
 # Method for building an extension with CUDA code extracted from https://stackoverflow.com/a/13300714/905845
@@ -194,8 +193,8 @@ def make_liblincs_extension():
         define_macros += [("LINCS_HAS_NVCC", None)]
         # @todo(Project management, later) Support several versions of CUDA?
         if sys.platform == "linux":
-            include_dirs += ["/usr/local/cuda-12.1/targets/x86_64-linux/include"]
-            library_dirs += ["/usr/local/cuda-12.1/targets/x86_64-linux/lib"]
+            include_dirs += ["/usr/local/cuda-12.4/targets/x86_64-linux/include"]
+            library_dirs += ["/usr/local/cuda-12.4/targets/x86_64-linux/lib"]
             extra_compile_args["cuda"] = ["-std=c++17", "-Xcompiler", "-fopenmp,-fPIC,-Werror=switch"]
         elif sys.platform == "win32":
             include_dirs += [os.path.join(windows_cuda_path, "include")]
@@ -211,7 +210,7 @@ def make_liblincs_extension():
 
     try:
         chrones_dir = subprocess.run(
-            ["chrones", "instrument", "c++", "header-location"], capture_output=True, universal_newlines=True, check=True
+            ["chrones", "instrument", "c++", "header-location"], capture_output=True, universal_newlines=True, check=True,
         ).stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         chrones_dir = None
@@ -226,14 +225,12 @@ def make_liblincs_extension():
             print("WARNING: 'chrones' was not found, lincs will be compiled without Chrones", file=sys.stderr)
 
     if sys.platform == "linux":
-        extra_compile_args["c++"] = ["-std=c++17", "-Werror=switch", "-fopenmp"]
+        extra_compile_args["c++"] = ["-std=c++17", "-Werror=switch", "-fopenmp", "-Wall", "-Wextra"]
         extra_compile_args["vendored-c++"] = ["-std=c++17", "-Werror=switch", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
         extra_link_args += ["-fopenmp"]
         libraries += [
-            f"boost_python{sys.version_info.major}{sys.version_info.minor}",
             "ortools",
-            # Weirdly required because of BoostPython:
-            f"python{sys.version_info.major}.{sys.version_info.minor}{'m' if sys.hexversion < 0x03080000 else ''}",
+            f"python{sys.version_info.major}.{sys.version_info.minor}",
         ]
         if os.environ.get("LINCS_DEV_COVERAGE", "false") == "true":
             extra_compile_args["c++"] += ["--coverage", "-O0"]
@@ -243,15 +240,13 @@ def make_liblincs_extension():
             ("__WIN32", None),  # For Cadical inside EvalMaxSat
             ("_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS", None),  # Silence a few warnings for OR-Tools
         ]
-        extra_compile_args["c++"] = ["/std:c++17", "/openmp"]
-        extra_compile_args["vendored-c++"] = ["/std:c++17", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
+        extra_compile_args["c++"] = ["/std:c++20", "/openmp"]
+        extra_compile_args["vendored-c++"] = ["/std:c++20", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
         lincs_dependencies = os.environ.get("LINCS_DEV_DEPENDENCIES", os.path.join("c:", "lincs-deps"))
         include_dirs += [os.path.join(lincs_dependencies, "include")]
         library_dirs += [os.path.join(lincs_dependencies, "lib")]
-        vc_version = os.environ.get("LINCS_DEV_VC_VERSION", "143")
         libraries += [
-            f"boost_python{sys.version_info.major}{sys.version_info.minor}-vc{vc_version}-mt-x64-1_82",
-            "ortools",
+            "ortools_full", "utf8_range", "utf8_validity",
             f"python{sys.version_info.major}{sys.version_info.minor}",
         ]
     elif sys.platform == "darwin":
@@ -259,7 +254,6 @@ def make_liblincs_extension():
         extra_compile_args["vendored-c++"] = ["-std=c++17", "-Werror=switch", "-w", "-DQUIET", "-DNBUILD", "-DNCONTRACTS"]
         extra_link_args += ["-lomp"]
         libraries += [
-            f"boost_python{sys.version_info.major}{sys.version_info.minor}",
             "ortools",
         ]
     else:
@@ -287,7 +281,7 @@ setuptools.setup(
     author="Vincent Jacques",
     author_email="vincent@vincent-jacques.net",
     install_requires=install_requires,
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_namespace_packages(),
     include_package_data=True,
     entry_points={
         "console_scripts": [
@@ -296,7 +290,7 @@ setuptools.setup(
     },
     ext_modules=[make_liblincs_extension()],
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",

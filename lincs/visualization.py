@@ -1,11 +1,15 @@
 # Copyright 2023-2024 Vincent Jacques
 
+import sys
 from typing import Iterable
 import unittest
 
 import matplotlib.pyplot
 
-from .classification import Problem, Model, Alternative
+from .classification import Problem, Model, Alternative, Alternatives
+
+
+single_peaked_not_supported_message = "Single-peaked criteria are not yet supported by the visualization. See https://github.com/MICS-Lab/lincs/discussions/21 and maybe contribute your ideas?"
 
 
 def visualize_classification_model(problem: Problem, model: Model, alternatives: Iterable[Alternative], axes: matplotlib.pyplot.Axes):
@@ -13,8 +17,8 @@ def visualize_classification_model(problem: Problem, model: Model, alternatives:
     Create a visual representation of a classification model and classified alternatives, using Matplotlib.
     """
 
-    # @todo(Feature, v1.2) Visualize single-peaked criteria.
-    # See the possible solutions in e-mail "Visualisation des critères single-peaked" 2023-11-24
+    model.check_consistency_with(problem)
+    Alternatives(problem, alternatives)  # Check consistency
 
     criteria_count = len(problem.criteria)
     assert criteria_count >= 1
@@ -43,15 +47,25 @@ def visualize_classification_model(problem: Problem, model: Model, alternatives:
 
     boundary_profiles = [[] for _ in problem.ordered_categories[1:]]
     for criterion, accepted_values in zip(problem.criteria, model.accepted_values):
-        assert accepted_values.is_thresholds
         if criterion.is_real:
-            for boundary_index in range(boundaries_count):
-                boundary_profiles[boundary_index].append(accepted_values.real_thresholds.thresholds[boundary_index])
+            if accepted_values.is_thresholds:
+                for boundary_index in range(boundaries_count):
+                    boundary_profiles[boundary_index].append(accepted_values.real_thresholds.thresholds[boundary_index])
+            else:
+                assert accepted_values.is_intervals
+                print(single_peaked_not_supported_message, file=sys.stderr)
+                exit(1)
         elif criterion.is_integer:
-            for boundary_index in range(boundaries_count):
-                boundary_profiles[boundary_index].append(accepted_values.integer_thresholds.thresholds[boundary_index])
+            if accepted_values.is_thresholds:
+                for boundary_index in range(boundaries_count):
+                    boundary_profiles[boundary_index].append(accepted_values.integer_thresholds.thresholds[boundary_index])
+            else:
+                assert accepted_values.is_intervals
+                print(single_peaked_not_supported_message, file=sys.stderr)
+                exit(1)
         else:
             assert criterion.is_enumerated
+            assert accepted_values.is_thresholds
             for boundary_index in range(boundaries_count):
                 boundary_profiles[boundary_index].append(criterion.enumerated_values.get_value_rank(accepted_values.enumerated_thresholds.thresholds[boundary_index]))
 
