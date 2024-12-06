@@ -4,12 +4,14 @@
 Changelog
 =========
 
-Version 2.0.0 (2024-12-06)
-==========================
+Versions 2.0.0 and 2.0.1 (2024-12-06)
+=====================================
 
 - Support Python 3.12 and 3.13
 
-- Drop support for macOS 11 (`not supported by GitHub Actions anymore <https://github.blog/changelog/2024-05-20-actions-upcoming-changes-to-github-hosted-macos-runners/>`_)
+- Drop support for macOS 11 (`not supported by GitHub Actions anymore <https://github.blog/changelog/2024-05-20-actions-upcoming-changes-to-github-hosted-macos-runners/>`__)
+
+- Drop support for macOS 12 (`not supported by GitHub Actions anymore <https://github.com/actions/runner-images/issues/10721>`__)
 
 - Fix the ``universal2`` wheels for macOS to actually run on M1 Macs
 
@@ -24,7 +26,7 @@ Version 2.0.0 (2024-12-06)
         - **Breaking** Adapt parts of the Python API to support single-peaked criteria
     - *all* the learning approaches work
     - the human-readable output of ``lincs describe`` has changed slightly to accommodate for single-peaked criteria
-    - ``lincs visualize`` fails when called with single-peaked criteria. See `this discussion <https://github.com/MICS-Lab/lincs/discussions/21>`_
+    - ``lincs visualize`` fails when called with single-peaked criteria. See `this discussion <https://github.com/MICS-Lab/lincs/discussions/21>`__
     - documented in :doc:`our "Single-peaked criteria" guide <single-peaked>`
 
 - **Breaking** Let some thresholds be unreachable (Fix bug found in real-life ASA data)
@@ -177,7 +179,7 @@ Versions 0.8.0 to 0.8.4
 - Rename option ``--...max-duration-seconds`` to ``--...max-duration``
 - Display termination condition after learning using the ``weights-profiles-breed`` approach
 - Make termination of the ``weights-profiles-breed`` approach more consistent
-- Integrate `Chrones <https://pypi.org/project/Chrones/>`_ (as an optional dependency, on Linux only)
+- Integrate `Chrones <https://pypi.org/project/Chrones/>`__ (as an optional dependency, on Linux only)
 - Display iterations in ``--...verbose`` mode
 - Fix pernicious memory bug
 
